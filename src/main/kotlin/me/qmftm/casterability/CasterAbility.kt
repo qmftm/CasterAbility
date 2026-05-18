@@ -5,10 +5,10 @@ import org.bukkit.plugin.java.JavaPlugin
 class CasterAbility : JavaPlugin() {
 
     override fun onEnable() {
-        // Plugin startup
+        // Plugin startup logic
     }
 
     override fun onDisable() {
-        // Plugin shutdown
+        // Plugin shutdown logic
     }
 }
