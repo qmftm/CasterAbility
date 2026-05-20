@@ -1,0 +1,36 @@
+game:
+  basic_health: 20
+  basic_level: 50
+  auto_skip_second: 80
+  ability_change_count: 3
+  infinity_hunger: true
+  infinity_duration: true
+  cooldown_bow: false
+  cooldown_shield: false
+  weather_clear: false
+  wreck: 0
+
+spawn:
+  world_name: casterability
+  random_spawn: true
+  random_radius: 100
+
+death:
+  drop_items: true
+  drop_exp: false
+  kick: false
+
+invincibility:
+  enable: true
+  second: 90
+  show_bossbar: true
+  invisible: true
+
+worldborder:
+  enable: true
+  max_radius: 500
+  min_radius: 5
+  shrink_second: 60
+  shrink_count: 5
+  shrink_random_center: true
+  show_bossbar: true

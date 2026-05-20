@@ -1,4 +1,18 @@
 name: CasterAbility
-version: '0.1.0'
+version: '${project.version}'
 main: me.qmftm.casterability.CasterAbility
 api-version: '1.21'
+description: Skript 기반 커스텀 능력자 시스템
+authors: [qmftm]
+depend: [Skript]
+
+commands:
+  ca:
+    description: 능력자 게임 기본 명령어
+    aliases: [aw, va, 능력자]
+    usage: /ca <start|stop|reload|list>
+
+permissions:
+  casterability.admin:
+    description: 관리자 권한
+    default: op
