@@ -42,7 +42,6 @@ class GameManager(private val plugin: CasterAbility) {
     private var spawnZ = 0.0
 
     private val passiveTasks = mutableListOf<BukkitTask>()
-    private var cooldownTask: BukkitTask? = null
 
     private var gameWorld: World? = null
 
@@ -170,6 +169,7 @@ class GameManager(private val plugin: CasterAbility) {
             goInGame()
             return
         }
+        // ChzzkAbility 개선: 무적 시간 시작 시에만 숨김 적용 (반복 제거)
         if (cfg.invincibilityInvisible) {
             gamePlayers.mapNotNull { Bukkit.getPlayer(it) }.forEach { p ->
                 p.addPotionEffect(PotionEffect(
@@ -181,6 +181,7 @@ class GameManager(private val plugin: CasterAbility) {
             "ca.invincibility", "&b무적 시간", cfg.invincibilitySecond,
             BossBar.Color.BLUE, cfg.invincibilityShowBossbar, colorChange = true, broadcastCountdown = true
         ) {
+            // ChzzkAbility 개선: 무적 종료 시 숨김 해제
             gamePlayers.mapNotNull { Bukkit.getPlayer(it) }
                 .forEach { it.removePotionEffect(PotionEffectType.INVISIBILITY) }
             goInGame()
@@ -197,10 +198,12 @@ class GameManager(private val plugin: CasterAbility) {
     // ── 게임 내 스케줄러 ──────────────────────────────────
 
     private fun startCooldownTicker() {
-        cooldownTask = Bukkit.getScheduler().runTaskTimer(plugin, Runnable {
-            if (!isRunning) { cooldownTask?.cancel(); return@Runnable }
-            AbilityRegistry.tickCooldowns()
-        }, 0L, 1L)
+        // 쿨타임(매 틱) · 이펙트(2틱) · 액션바 UI(2틱)를 GameScheduler가 모두 관리한다.
+        // 태스크는 GameScheduler가 들고 있다가 stopGame()에서 취소된다.
+        GameScheduler.start(plugin) {
+            if (!isRunning || phase != GamePhase.IN_GAME) emptyList()
+            else gamePlayers.mapNotNull { Bukkit.getPlayer(it) }
+        }
     }
 
     private fun startPassiveTasks() {
@@ -268,14 +271,17 @@ class GameManager(private val plugin: CasterAbility) {
 
         passiveTasks.forEach { it.cancel() }
         passiveTasks.clear()
-        cooldownTask?.cancel()
-        cooldownTask = null
+        // 쿨타임/이펙트/UI 태스크 취소 — 액션바를 지우기 전에 멈춰야 다시 그려지지 않는다
+        GameScheduler.stop()
 
         gamePlayers.mapNotNull { Bukkit.getPlayer(it) }.forEach { p ->
             p.closeInventory()
             p.removePotionEffect(PotionEffectType.INVISIBILITY)
+            p.sendActionBar("".toComponent())
         }
         AbilityRegistry.clearAll()
+        PlayerStateManager.clearAll()
+        GameUIRenderer.clearAll()
         gamePlayers.clear()
         bossBar.deleteAll()
 
