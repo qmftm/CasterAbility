@@ -32,6 +32,8 @@ object SkriptRegistry {
         EvtAbilityUse.register()
         EvtStatusEffectApply.register()
         EvtStatusEffectExpire.register()
+        EvtGameStart.register()
+        EvtGameEnd.register()
 
         // ── Effect (능력 조작) ────────────────────────────
         EffSetAbilityClass.register()

@@ -136,8 +136,8 @@ on status effect expire "pig_rampage":
 
 
 # ── 걷기 속도 되돌리기 ────────────────────────────────────
-# 몸무게는 걷기 속도를 직접 건드리므로, 능력이 끝나는 자리에서
-# 기본값으로 돌려놓지 않으면 그대로 남습니다.
+# 몸무게는 걷기 속도를 직접 건드리므로, 능력이 끝나는 자리마다
+# 기본값으로 돌려놓지 않으면 게임이 끝나도 느린 채로 남습니다.
 
 on respawn:
     player has ability class "pig"
@@ -147,3 +147,11 @@ on respawn:
 on quit:
     player has ability class "pig"
     set player's walk speed to {@base_walk_speed}
+
+# game end 는 능력이 지워지기 전에 발생하므로
+# 여기서 아직 누가 돼지였는지 알 수 있습니다.
+on game end:
+    loop all players:
+        if loop-player has ability class "pig":
+            set loop-player's walk speed to {@base_walk_speed}
+            delete {pig.weight::%loop-player's uuid%}

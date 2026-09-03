@@ -4,6 +4,8 @@ import me.qmftm.casterability.CasterAbility
 import me.qmftm.casterability.ability.AbilityRegistry
 import me.qmftm.casterability.ability.AbilityTrigger
 import me.qmftm.casterability.event.AbilityUseEvent
+import me.qmftm.casterability.event.GameEndEvent
+import me.qmftm.casterability.event.GameStartEvent
 import me.qmftm.casterability.listener.PassiveEventBinder
 import me.qmftm.casterability.util.BossBarManager
 import me.qmftm.casterability.util.broadcast
@@ -184,6 +186,7 @@ class GameManager(private val plugin: CasterAbility) {
         startCooldownTicker()
         startPassiveTasks()
         startWorldBorderShrink()
+        Bukkit.getPluginManager().callEvent(GameStartEvent())
     }
 
     // ── 게임 내 스케줄러 ──────────────────────────────────
@@ -248,6 +251,10 @@ class GameManager(private val plugin: CasterAbility) {
         }
         isRunning = false
         phase = GamePhase.IDLE
+
+        // 정리하기 전에 알린다 — 스크립트가 아직 누가 어떤 능력이었는지 볼 수 있어야
+        // 능력이 플레이어에게 남겨둔 것(걷기 속도 등)을 되돌릴 수 있다
+        Bukkit.getPluginManager().callEvent(GameEndEvent())
 
         passiveTasks.forEach { it.cancel() }
         passiveTasks.clear()
