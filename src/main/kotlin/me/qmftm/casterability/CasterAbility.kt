@@ -2,7 +2,7 @@ package me.qmftm.casterability
 
 import ch.njol.skript.Skript
 import me.qmftm.casterability.command.Commands
-import me.qmftm.casterability.util.ExampleScripts
+import me.qmftm.casterability.util.ClassicAbilities
 import me.qmftm.casterability.config.GameConfig
 import me.qmftm.casterability.game.GameManager
 import me.qmftm.casterability.gui.ConfigGui
@@ -48,8 +48,8 @@ class CasterAbility : JavaPlugin() {
         pm.registerEvents(GuiListener(this), this)
         pm.registerEvents(AbilityDispatcher(gameManager), this)
 
-        // ── 예제 스크립트 생성 ────────────────────────────
-        ExampleScripts.install(this)
+        // ── 기본 능력(classic) 설치 ───────────────────────
+        ClassicAbilities.install(this)
 
         logger.info("CasterAbility v${description.version} 활성화됨")
         Bukkit.getOnlinePlayers()

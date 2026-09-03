@@ -45,18 +45,28 @@ on ability use "yandere_jealousy":
     send "&d질투!" to player
 ```
 
-서버를 처음 켜면 `plugins/CasterAbility/examples/` 에 예제가 생성됩니다.
-
-| 파일 | 내용 |
-|---|---|
-| `README.txt` | 문법과 사용 가능한 구문 전체 |
-| `yandere.sk` | 얀데레 — 집착 대상, 거리 기반 피해 증감, 질투 |
-| `menhera.sk` | 멘헤라 — 자연 회복 차단, 재생, 자해 강화 |
-
-쓰고 싶은 파일을 `plugins/Skript/scripts/` 로 복사한 뒤 `/sk reload all` 하세요.
+문법 전체는 `plugins/CasterAbility/SYNTAX.txt` 에 정리되어 있습니다.
 
 > 능력을 **지우거나 이름을 바꾼** 뒤에는 `/ca reload` → `/sk reload all` 순서로 하세요.
 > `/sk reload all` 만 하면 지운 능력이 목록에 그대로 남습니다.
+
+<br/>
+
+**🎁 기본 능력**
+
+플러그인을 처음 설치하면 기본 능력이 자동으로 깔립니다.
+
+```
+plugins/Skript/scripts/CasterAbility/classic/
+├── yandere.sk    얀데레 — 집착 대상, 거리 기반 피해 증감, 질투
+└── menhera.sk    멘헤라 — 자연 회복 차단, 재생, 자해 강화
+```
+
+처음 설치한 직후에는 `/sk reload all` 을 한 번 하거나 서버를 재시작하세요.
+
+- `classic` 폴더가 이미 있으면 건드리지 않습니다. 능력 파일 하나를 지워도 되살아나지 않습니다.
+- 처음 상태로 되돌리려면 `classic` 폴더째 지우고 재시작하세요.
+- 자동 설치가 싫으면 `config.yml` 의 `classic.install` 을 `false` 로 두세요.
 
 <br/>
 

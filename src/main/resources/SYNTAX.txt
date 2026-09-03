@@ -1,17 +1,25 @@
-CasterAbility — 예제 스크립트
+CasterAbility — 능력 작성 문법
 ================================
 
-이 폴더의 .sk 파일은 CasterAbility가 서버 시작 시 꺼내둔 예제입니다.
-여기 있는 것만으로는 아무 일도 일어나지 않습니다.
+기본 능력(classic)
+------------------
+플러그인을 처음 켜면 기본 능력이 여기에 깔립니다.
 
-사용법
-------
-1. 쓰고 싶은 .sk 파일을 plugins/Skript/scripts/ 로 복사합니다.
-2. 서버에서 /sk reload all 을 실행합니다.
-3. /ca start 로 게임을 시작하면 추첨 목록에 능력이 나옵니다.
+    plugins/Skript/scripts/CasterAbility/classic/<능력>.sk
 
-이 폴더의 파일은 덮어쓰지 않습니다.
-예제를 처음 상태로 되돌리려면 파일을 지우고 서버를 재시작하세요.
+Skript가 자기 scripts 폴더 아래를 전부 읽기 때문에 그대로 동작합니다.
+처음 설치한 직후에는 /sk reload all 을 한 번 하거나 서버를 재시작하세요.
+
+- classic 폴더가 이미 있으면 플러그인이 손대지 않습니다.
+  능력 파일 하나를 지워도 재시작할 때 되살아나지 않습니다.
+- 기본 능력을 처음 상태로 되돌리려면 classic 폴더째 지우고 재시작하세요.
+- 자동 설치가 싫으면 config.yml 에서 classic.install 을 false 로 바꾸세요.
+
+내 능력을 추가하려면 plugins/Skript/scripts/ 아래 아무 데나
+.sk 파일을 만들고 아래 문법대로 쓰면 됩니다.
+
+능력을 지우거나 이름을 바꾼 뒤에는 /ca reload 를 먼저 하고
+/sk reload all 을 하세요. 순서가 반대면 지운 능력이 목록에 남습니다.
 
 
 능력 정의 문법

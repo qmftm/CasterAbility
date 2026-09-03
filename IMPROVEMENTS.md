@@ -114,20 +114,31 @@ Effect는 한 줄짜리 SimpleNode에서만 매칭됩니다. 즉 스크립트에
 
 ---
 
-## 3. 예제 스크립트
+## 3. 기본 능력(classic) 자동 설치
 
-서버가 켜지면 `plugins/CasterAbility/examples/` 에 예제가 생깁니다.
-(`util/ExampleScripts.kt`, JAR 리소스 `resources/examples/`)
+`util/ClassicAbilities.kt`, JAR 리소스 `resources/classic/`
 
-- `README.txt` — DSL 문법과 쓸 수 있는 구문 전체
-- `yandere.sk` — 얀데레 (집착 대상, 거리 기반 피해 증감, 질투)
-- `menhera.sk` — 멘헤라 (자연 회복 차단, 맞으면 재생, 자해 강화)
+처음 켜면 능력 `.sk` 파일을 Skript의 스크립트 폴더에 깝니다.
 
-Skript의 scripts 폴더에 직접 쓰지 않습니다. 남의 플러그인 폴더에 실행되는
-스크립트를 말없이 넣으면 서버가 켜지자마자 예상 못 한 능력이 등록됩니다.
-쓰려면 `plugins/Skript/scripts/` 로 복사한 뒤 `/sk reload all` 하세요.
+    plugins/Skript/scripts/CasterAbility/classic/yandere.sk
+    plugins/Skript/scripts/CasterAbility/classic/menhera.sk
 
-이미 있는 파일은 덮어쓰지 않습니다. 예제를 되돌리려면 지우고 재시작하세요.
+Skript는 자기 scripts 폴더 아래만 읽기 때문에, 설치하자마자 기본 능력으로
+잡히려면 여기여야 합니다. Skript를 못 찾으면 `plugins/CasterAbility/classic/`
+에 꺼내두고 옮기라고 경고를 남깁니다.
+
+설치 판단은 **classic 폴더의 존재 여부**로 합니다. 파일 단위가 아닙니다.
+
+- 폴더가 없으면 처음 설치로 보고 전부 씁니다.
+- 폴더가 있으면 손대지 않습니다. 그래서 능력 파일 하나를 지워도 재시작할 때
+  되살아나지 않습니다.
+- 되돌리려면 폴더째 지우고 재시작합니다.
+- `config.yml` 의 `classic.install: false` 로 끌 수 있습니다.
+
+문법 문서 `SYNTAX.txt` 는 스크립트가 아니므로 플러그인 폴더에 둡니다.
+
+> 파일을 쓰는 시점이 Skript의 스크립트 로딩보다 늦을 수 있어서, 처음 설치한
+> 직후에는 `/sk reload all` 이나 재시작이 필요하다고 로그에 남깁니다.
 
 > 이 두 .sk 파일은 문법을 맞춰 작성했지만 **서버에서 실행해 검증하지는
 > 않았습니다.** 특히 `on heal of player:` + `heal reason is satiated or regen`

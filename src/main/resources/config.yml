@@ -1,3 +1,10 @@
+# 기본 능력(classic) 자동 설치
+#   처음 켤 때 plugins/Skript/scripts/CasterAbility/classic/ 에 능력 .sk 파일을 깔아둡니다.
+#   classic 폴더가 이미 있으면 건드리지 않습니다.
+#   처음 상태로 되돌리려면 그 폴더째 지우고 재시작하세요.
+classic:
+  install: true
+
 game:
   basic_health: 20
   basic_level: 50
