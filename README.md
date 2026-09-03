@@ -45,6 +45,21 @@ on ability use "yandere_jealousy":
     send "&d질투!" to player
 ```
 
+패시브는 주기 대신 이벤트로도 발동할 수 있습니다.
+`event:` 에는 스크립트에서 `on ~~~:` 로 쓰는 이벤트 이름을 그대로 적습니다.
+
+```
+on load:
+    ability "reflect":
+        class: "menhera"
+        trigger: passive
+        event: damage
+        cooldown: 5
+
+on ability use "reflect":
+    damage event-entity by 2
+```
+
 스크립트만으로는 만들기 번거로운 것들도 구문으로 제공합니다.
 
 ```

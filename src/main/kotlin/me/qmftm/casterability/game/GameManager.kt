@@ -4,6 +4,7 @@ import me.qmftm.casterability.CasterAbility
 import me.qmftm.casterability.ability.AbilityRegistry
 import me.qmftm.casterability.ability.AbilityTrigger
 import me.qmftm.casterability.event.AbilityUseEvent
+import me.qmftm.casterability.listener.PassiveEventBinder
 import me.qmftm.casterability.util.BossBarManager
 import me.qmftm.casterability.util.broadcast
 import me.qmftm.casterability.util.toComponent
@@ -39,6 +40,7 @@ class GameManager(private val plugin: CasterAbility) {
     private var spawnZ = 0.0
 
     private val passiveTasks = mutableListOf<BukkitTask>()
+    private val passiveEvents = PassiveEventBinder(plugin, this)
 
     private var gameWorld: World? = null
 
@@ -195,8 +197,11 @@ class GameManager(private val plugin: CasterAbility) {
     }
 
     private fun startPassiveTasks() {
+        // event: 로 정의한 패시브는 주기가 아니라 이벤트로 발동한다
+        passiveEvents.bindAll()
+
         AbilityRegistry.getAllAbilities()
-            .filter { it.trigger == AbilityTrigger.PASSIVE }
+            .filter { it.trigger == AbilityTrigger.PASSIVE && !it.isEventDriven }
             .forEach { def ->
                 val task = Bukkit.getScheduler().runTaskTimer(plugin, Runnable {
                     if (!isRunning || phase != GamePhase.IN_GAME) return@Runnable
@@ -245,6 +250,7 @@ class GameManager(private val plugin: CasterAbility) {
 
         passiveTasks.forEach { it.cancel() }
         passiveTasks.clear()
+        passiveEvents.unbindAll()
         // 쿨타임/이펙트/UI 태스크 취소 — 액션바를 지우기 전에 멈춰야 다시 그려지지 않는다
         GameScheduler.stop()
         worldBorder.stop()

@@ -17,6 +17,9 @@ import org.bukkit.event.player.PlayerEvent
  * @param trigger   어떤 트리거로 발동되었는지
  * @param target    대상 엔티티 (on_hit / on_damaged 시 설정됨, 없으면 null)
  * @param damage    관련 피해량 (on_hit / on_damaged 시, 없으면 null)
+ * @param sourceEvent 이 능력을 발동시킨 원본 Bukkit 이벤트.
+ *                    `trigger: passive` + `event:` 로 정의한 능력일 때만 들어 있습니다.
+ *                    스크립트가 cancel event 를 하면 이 이벤트도 같이 취소됩니다.
  */
 class AbilityUseEvent(
     player: Player,
@@ -24,6 +27,7 @@ class AbilityUseEvent(
     val trigger: AbilityTrigger,
     val target: Entity? = null,
     var damage: Double? = null,
+    val sourceEvent: org.bukkit.event.Event? = null,
 ) : PlayerEvent(player), Cancellable {
 
     val abilityId: String get() = ability.id

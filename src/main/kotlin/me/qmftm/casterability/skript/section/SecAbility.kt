@@ -10,6 +10,7 @@ import ch.njol.util.Kleenean
 import me.qmftm.casterability.ability.AbilityDefinition
 import me.qmftm.casterability.ability.AbilityRegistry
 import me.qmftm.casterability.ability.AbilityTrigger
+import me.qmftm.casterability.skript.SkriptEventLookup
 import org.bukkit.Material
 import org.bukkit.event.Event
 
@@ -23,6 +24,7 @@ import org.bukkit.event.Event
  *         item: blaze_rod
  *         cooldown: 45
  *         passive_interval: 20    ← trigger가 passive일 때만 의미 있음
+ *         event: damage           ← trigger가 passive일 때만. 주기 대신 이 이벤트로 발동
  *
  * trigger 종류: right_click, left_click, passive, on_hit, on_damaged, on_kill, on_death
  */
@@ -41,6 +43,8 @@ class SecAbility : Section() {
     private var item: Material? = null
     private var cooldown: Int = 0
     private var passiveInterval: Long = 20L
+    private var eventName: String? = null
+    private var eventClasses: List<Class<out Event>> = emptyList()
 
     @Suppress("UNCHECKED_CAST")
     override fun init(
@@ -98,6 +102,28 @@ class SecAbility : Section() {
             passiveInterval = parsed
         }
 
+        entries["event"]?.let { raw ->
+            if (trigger != AbilityTrigger.PASSIVE) {
+                Skript.error("event: 는 trigger가 passive일 때만 쓸 수 있습니다. (지금은 ${trigger.skriptName})")
+                return false
+            }
+            when (val result = SkriptEventLookup.resolve(raw)) {
+                is SkriptEventLookup.Result.Found -> {
+                    eventName = result.label
+                    eventClasses = result.classes
+                }
+                is SkriptEventLookup.Result.NotFound -> {
+                    val hint = if (result.suggestions.isEmpty()) ""
+                               else " 혹시 이건가요: " + result.suggestions.joinToString(", ")
+                    Skript.error(
+                        "알 수 없는 event: '$raw' — 스크립트에서 'on ~~~:' 로 쓸 수 있는 " +
+                        "이벤트 이름을 그대로 적으세요.$hint"
+                    )
+                    return false
+                }
+            }
+        }
+
         return true
     }
 
@@ -116,6 +142,8 @@ class SecAbility : Section() {
                     item = item,
                     cooldownSeconds = cooldown,
                     passiveIntervalTicks = passiveInterval,
+                    eventName = eventName,
+                    eventClasses = eventClasses,
                 )
             )
         }

@@ -1,6 +1,7 @@
 package me.qmftm.casterability.ability
 
 import org.bukkit.Material
+import org.bukkit.event.Event
 
 /**
  * Skript DSL:
@@ -21,4 +22,13 @@ data class AbilityDefinition(
     val item: Material?,          // 트리거 아이템 (우클릭/좌클릭 시)
     val cooldownSeconds: Int,     // 0이면 쿨타임 없음
     val passiveIntervalTicks: Long, // PASSIVE 트리거일 때 주기 (기본 20 = 1초)
-)
+
+    /** PASSIVE + `event:` 일 때 스크립트에 적힌 이벤트 이름 (없으면 null) */
+    val eventName: String? = null,
+
+    /** 위 이름을 풀어놓은 실제 Bukkit 이벤트 클래스들 */
+    val eventClasses: List<Class<out Event>> = emptyList(),
+) {
+    /** 주기가 아니라 이벤트를 받아 발동하는 패시브인지 */
+    val isEventDriven: Boolean get() = trigger == AbilityTrigger.PASSIVE && eventClasses.isNotEmpty()
+}

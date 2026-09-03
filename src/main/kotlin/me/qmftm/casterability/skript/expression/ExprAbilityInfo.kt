@@ -282,6 +282,36 @@ class ExprAbilityTrigger : SimpleExpression<String>() {
     override fun toString(e: Event?, d: Boolean) = "trigger of ability ${abilityExpr.toString(e, d)}"
 }
 
+/** `trigger: passive` + `event:` 로 붙여둔 이벤트 이름. 아니면 비어 있다. */
+class ExprAbilityEvent : SimpleExpression<String>() {
+    companion object {
+        fun register() {
+            Skript.registerExpression(
+                ExprAbilityEvent::class.java, String::class.java,
+                ExpressionType.COMBINED,
+                "[the] event of [ability] %string%"
+            )
+        }
+    }
+
+    private lateinit var abilityExpr: Expression<String>
+
+    @Suppress("UNCHECKED_CAST")
+    override fun init(exprs: Array<out Expression<*>>, i: Int, k: Kleenean, p: SkriptParser.ParseResult): Boolean {
+        abilityExpr = exprs[0] as Expression<String>
+        return true
+    }
+
+    override fun get(event: Event): Array<String?> {
+        val id = abilityExpr.getSingle(event) ?: return arrayOfNulls(1)
+        return arrayOf(AbilityRegistry.getAbility(id)?.eventName)
+    }
+
+    override fun isSingle() = true
+    override fun getReturnType() = String::class.java
+    override fun toString(e: Event?, d: Boolean) = "event of ability ${abilityExpr.toString(e, d)}"
+}
+
 class ExprAbilityItem : SimpleExpression<String>() {
     companion object {
         fun register() {

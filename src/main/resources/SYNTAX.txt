@@ -49,6 +49,7 @@ ability 항목
     item                트리거로 쓸 손에 든 아이템. 없으면 아무거나
     cooldown            초 단위. 기본 0 (쿨타임 없음)
     passive_interval    trigger가 passive일 때 tick 간격. 기본 20
+    event               trigger가 passive일 때만. 주기 대신 이 이벤트로 발동
 
 trigger 종류
     right_click     손에 든 아이템으로 우클릭
@@ -58,6 +59,50 @@ trigger 종류
     on_damaged      내가 맞았을 때
     on_kill         내가 죽였을 때
     on_death        내가 죽었을 때
+
+
+이벤트로 발동하는 패시브
+------------------------
+패시브는 원래 passive_interval 마다 저 혼자 돕니다.
+대신 event: 를 적으면 그 이벤트가 일어날 때마다 발동합니다.
+
+    on load:
+        ability "reflect":
+            class: "menhera"
+            trigger: passive
+            event: damage
+            cooldown: 5
+
+    on ability use "reflect":
+        damage event-entity by 2
+
+event: 에는 스크립트에서 on ~~~: 로 쓰는 이벤트 이름을 그대로 적습니다.
+damage, death, join, quit, respawn, break, place, consume, sneak toggle 등
+Skript가 아는 이름이면 됩니다. 애드온이 추가한 이벤트도 됩니다.
+
+    event: damage
+    event: on damage      ← 앞에 on 을 붙여도 됩니다
+    event: "damage"       ← 따옴표도 됩니다
+
+이름을 잘못 쓰면 스크립트를 읽을 때 오류가 나면서 비슷한 이름을 알려줍니다.
+
+이벤트 이름만 봅니다. on right click with a stick 처럼 뒤에 붙는 조건은
+무시하므로, 그런 조건은 on ability use 안에서 직접 확인하세요.
+
+이벤트 안에서 쓸 수 있는 값
+    player          그 이벤트의 주인공 플레이어
+    event-entity    상대편. 때린 쪽 / 맞은 쪽 / 죽인 쪽
+    ability damage  피해 이벤트일 때 피해량. 바꾸면 원본에 반영됩니다
+    cancel event    능력도 취소하고 원본 이벤트도 같이 취소합니다
+
+주의할 점
+    - 게임이 진행 중일 때만, 그 클래스를 가진 참가자에게만 발동합니다.
+    - 쿨타임 중이거나 disable 한 능력은 발동하지 않습니다.
+    - 능력이 자기 이벤트를 다시 부르는 경우는 한 번만 돌고 멈춥니다.
+      (예: damage 로 발동해서 상대를 damage 시키는 능력)
+    - 채팅처럼 비동기로 도는 이벤트에는 붙일 수 없습니다. 콘솔에 경고가 뜹니다.
+    - 리스너는 게임을 시작할 때 답니다. 능력을 고쳤으면
+      /ca reload → /sk reload all 후에 게임을 다시 시작하세요.
 
 
 능력 동작 작성
@@ -96,6 +141,7 @@ trigger 종류
     all abilities                        → 등록된 모든 능력 id
     players with ability class %string%  → 그 클래스를 가진 접속 중인 플레이어들
     trigger of ability %string%          → "right_click"
+    event of ability %string%            → "Damage" (event: 를 적은 패시브만)
     item of ability %string%             → "blaze_rod" (없으면 비어 있음)
     max cooldown of ability %string%     → 정의에 적힌 쿨타임 초 (남은 쿨타임 아님)
 

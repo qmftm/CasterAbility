@@ -53,6 +53,7 @@ object SkriptRegistry {
         ExprAbilitiesOf.register()
         ExprPlayersWithClass.register()
         ExprAbilityTrigger.register()
+        ExprAbilityEvent.register()
         ExprAbilityItem.register()
         ExprAbilityMaxCooldown.register()
 
