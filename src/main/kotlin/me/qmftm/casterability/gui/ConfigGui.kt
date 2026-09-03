@@ -7,6 +7,7 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import java.util.UUID
+import me.qmftm.casterability.util.toSectionComponent
 
 class ConfigGui(private val plugin: CasterAbility) {
 
@@ -107,7 +108,7 @@ class ConfigGui(private val plugin: CasterAbility) {
     // ── 렌더 ───────────────────────────────────────────────
 
     private fun buildInv(session: MutableMap<String, Any>): Inventory {
-        val inv  = Bukkit.createInventory(null, SIZE, TITLE)
+        val inv  = Bukkit.createInventory(null, SIZE, TITLE.toSectionComponent())
         val fill = glass(Material.WHITE_STAINED_GLASS_PANE)
         repeat(SIZE) { inv.setItem(it, fill) }
 
@@ -212,7 +213,7 @@ class ConfigGui(private val plugin: CasterAbility) {
     private fun glass(mat: Material, name: String = " "): ItemStack {
         val item = ItemStack(mat)
         val meta = item.itemMeta ?: return item
-        meta.setDisplayName(name)
+        meta.displayName(name.toSectionComponent())
         item.itemMeta = meta
         return item
     }
@@ -220,8 +221,8 @@ class ConfigGui(private val plugin: CasterAbility) {
     private fun makeItem(mat: Material, name: String, vararg lore: String): ItemStack {
         val item = ItemStack(mat)
         val meta = item.itemMeta ?: return item
-        meta.setDisplayName(name)
-        if (lore.isNotEmpty()) meta.lore = lore.toList()
+        meta.displayName(name.toSectionComponent())
+        if (lore.isNotEmpty()) meta.lore(lore.map { it.toSectionComponent() })
         item.itemMeta = meta
         return item
     }

@@ -51,7 +51,7 @@ class CasterAbility : JavaPlugin() {
         // ── 기본 능력(classic) 설치 ───────────────────────
         ClassicAbilities.install(this)
 
-        logger.info("CasterAbility v${description.version} 활성화됨")
+        logger.info("CasterAbility v${pluginMeta.version} 활성화됨")
         Bukkit.getOnlinePlayers()
             .filter { it.isOp }
             .forEach { it.sendMessage("§6[§aCaster§7Ability§6] §f플러그인이 활성화되었습니다.") }

@@ -82,9 +82,9 @@ class BossBarManager(private val plugin: CasterAbility) {
 
             if (broadcast) {
                 when (remaining[0]) {
-                    3 -> Bukkit.broadcastMessage("§e${name.replace("&", "§")} §e3초 남았습니다.")
-                    2 -> Bukkit.broadcastMessage("§6${name.replace("&", "§")} §62초 남았습니다.")
-                    1 -> Bukkit.broadcastMessage("§c${name.replace("&", "§")} §c1초 남았습니다.")
+                    3 -> Bukkit.broadcast("§e${name.replace("&", "§")} §e3초 남았습니다.".toSectionComponent())
+                    2 -> Bukkit.broadcast("§6${name.replace("&", "§")} §62초 남았습니다.".toSectionComponent())
+                    1 -> Bukkit.broadcast("§c${name.replace("&", "§")} §c1초 남았습니다.".toSectionComponent())
                 }
             }
 

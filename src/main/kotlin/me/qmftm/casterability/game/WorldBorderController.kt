@@ -188,7 +188,7 @@ class WorldBorderController(
         }
 
         // 크기 전환은 서버에 맡기고, 중앙만 직접 보간한다
-        border.setSize(targetRadius * 2, seconds.toLong())
+        border.changeSize(targetRadius * 2, seconds.toLong())
 
         val fromX = centerX
         val fromZ = centerZ

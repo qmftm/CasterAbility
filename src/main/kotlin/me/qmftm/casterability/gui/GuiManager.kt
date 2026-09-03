@@ -9,6 +9,7 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
+import me.qmftm.casterability.util.toSectionComponent
 
 class GuiManager(private val plugin: CasterAbility) {
 
@@ -26,7 +27,7 @@ class GuiManager(private val plugin: CasterAbility) {
         val left    = gm.getDrawCount(p)
         val cls     = AbilityRegistry.getClass(classId)
 
-        val inv = Bukkit.createInventory(null, 27, DRAW_GUI_TITLE)
+        val inv = Bukkit.createInventory(null, 27, DRAW_GUI_TITLE.toSectionComponent())
 
         val bg = makeItem(Material.WHITE_STAINED_GLASS_PANE, " ")
         repeat(27) { inv.setItem(it, bg) }
@@ -54,7 +55,7 @@ class GuiManager(private val plugin: CasterAbility) {
     fun openAbilityList(p: Player) {
         val classes = AbilityRegistry.getAllClasses().toList()
         val rows    = maxOf(1, minOf(6, (classes.size + 8) / 9 + 1))
-        val inv     = Bukkit.createInventory(null, rows * 9, LIST_GUI_TITLE)
+        val inv     = Bukkit.createInventory(null, rows * 9, LIST_GUI_TITLE.toSectionComponent())
 
         val bg = makeItem(Material.WHITE_STAINED_GLASS_PANE, " ")
         repeat(rows * 9) { inv.setItem(it, bg) }
@@ -94,8 +95,8 @@ class GuiManager(private val plugin: CasterAbility) {
     fun makeItem(mat: Material, name: String, vararg lore: String): ItemStack {
         val item = ItemStack(mat)
         val meta: ItemMeta = item.itemMeta ?: return item
-        meta.setDisplayName(name)
-        if (lore.isNotEmpty()) meta.lore = lore.toList()
+        meta.displayName(name.toSectionComponent())
+        if (lore.isNotEmpty()) meta.lore(lore.map { it.toSectionComponent() })
         item.itemMeta = meta
         return item
     }
