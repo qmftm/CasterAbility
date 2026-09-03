@@ -39,6 +39,7 @@ class SecAbility : Section() {
     private lateinit var abilityId: Expression<String>
 
     private var classId: String = ""
+    private var name: String? = null
     private var trigger: AbilityTrigger = AbilityTrigger.RIGHT_CLICK
     private var item: Material? = null
     private var cooldown: Int = 0
@@ -64,6 +65,8 @@ class SecAbility : Section() {
             Skript.error("ability 블록에 'class:' 가 없습니다.")
             return false
         }
+
+        name = entries["name"]?.takeIf { it.isNotBlank() }
 
         entries["trigger"]?.let { raw ->
             trigger = AbilityTrigger.fromString(raw) ?: run {
@@ -138,6 +141,7 @@ class SecAbility : Section() {
                 AbilityDefinition(
                     id = id,
                     classId = classId,
+                    name = name,
                     trigger = trigger,
                     item = item,
                     cooldownSeconds = cooldown,

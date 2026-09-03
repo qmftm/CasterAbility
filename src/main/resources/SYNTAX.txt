@@ -35,6 +35,7 @@ Skript가 자기 scripts 폴더 아래를 전부 읽기 때문에 그대로 동�
 
         ability "yandere_jealousy":
             class: "yandere"
+            name: "질투"
             trigger: right_click
             item: blaze_rod
             cooldown: 45
@@ -45,6 +46,7 @@ ability class 항목
 
 ability 항목
     class               (필수) 어느 ability class에 속하는지
+    name                액션바 쿨타임에 보여줄 이름. 없으면 id를 그대로 씁니다
     trigger             아래 목록 중 하나. 기본 right_click
     item                트리거로 쓸 손에 든 아이템. 없으면 아무거나
     cooldown            초 단위. 기본 0 (쿨타임 없음)
@@ -103,6 +105,32 @@ Skript가 아는 이름이면 됩니다. 애드온이 추가한 이벤트도 됩
     - 채팅처럼 비동기로 도는 이벤트에는 붙일 수 없습니다. 콘솔에 경고가 뜹니다.
     - 리스너는 게임을 시작할 때 답니다. 능력을 고쳤으면
       /ca reload → /sk reload all 후에 게임을 다시 시작하세요.
+
+
+액션바
+------
+액션바는 항상 이 순서로 그려집니다. 비어 있는 칸은 구분선까지 통째로 건너뜁니다.
+
+    상태이상  |  능력 부가 정보  |  능력 쿨타임
+
+    §c기절: 2.4 §7| §e충전 3/5 §7| §b질투: 12.5
+
+    상태이상       apply status effect 로 건 것. 남은 초까지 자동으로 표시
+    능력 부가 정보  스크립트가 직접 올리는 글. 아래 참고
+    능력 쿨타임     지금 도는 쿨타임. ability 블록의 name: 을 이름으로 씁니다
+
+셋 다 비면 액션바를 한 번 지우고, 그 뒤로는 아무것도 보내지 않습니다.
+
+가운데 칸(능력 부가 정보)은 id로 나눠 쓰기 때문에 능력 여러 개가 동시에
+글을 올려도 서로 덮어쓰지 않고 나란히 붙습니다.
+
+    set ability info "charge" of player to "&e충전 %{ca.charge::%player%}%/5"
+    clear ability info "charge" of player
+    clear all ability info of player
+
+    빈 문자열을 넣으면 지운 것으로 칩니다.
+
+액션바는 게임이 진행 중일 때만 그려집니다.
 
 
 상태이상
@@ -207,6 +235,7 @@ Skript가 아는 이름이면 됩니다. 애드온이 추가한 이벤트도 됩
     all abilities                        → 등록된 모든 능력 id
     players with ability class %string%  → 그 클래스를 가진 접속 중인 플레이어들
     trigger of ability %string%          → "right_click"
+    name of ability %string%             → "질투" (name이 없으면 id)
     event of ability %string%            → "Damage" (event: 를 적은 패시브만)
     item of ability %string%             → "blaze_rod" (없으면 비어 있음)
     max cooldown of ability %string%     → 정의에 적힌 쿨타임 초 (남은 쿨타임 아님)
@@ -252,6 +281,11 @@ Skript가 아는 이름이면 됩니다. 애드온이 추가한 이벤트도 됩
     remove status effect %string% from %player%
     clear all status effects from %player%
     set the name of status effect %string% to %string%
+
+효과 — 액션바 부가 정보
+    set ability info %string% (of|for) %player% to %string%
+    clear ability info %string% (of|for) %player%
+    clear all ability info (of|for) %player%
 
 
 능력 잠시 끄기

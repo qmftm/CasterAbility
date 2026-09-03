@@ -47,6 +47,10 @@ object SkriptRegistry {
         EffRemoveStatusEffect.register()
         EffStatusEffectName.register()
 
+        // ── Effect (액션바 부가 정보) ─────────────────────
+        EffSetAbilityInfo.register()
+        EffClearAbilityInfo.register()
+
         // ── Expression (값 읽기) ──────────────────────────
         ExprAbilityClassId.register()
         ExprAbilityClassName.register()
@@ -63,6 +67,7 @@ object SkriptRegistry {
         ExprAbilitiesOf.register()
         ExprPlayersWithClass.register()
         ExprAbilityTrigger.register()
+        ExprAbilityName.register()
         ExprAbilityEvent.register()
         ExprAbilityItem.register()
         ExprAbilityMaxCooldown.register()

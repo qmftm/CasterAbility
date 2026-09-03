@@ -60,6 +60,20 @@ on ability use "reflect":
     damage event-entity by 2
 ```
 
+액션바는 `상태이상 | 능력 부가 정보 | 능력 쿨타임` 순서로 그려지고,
+비어 있는 칸은 건너뜁니다.
+
+```
+§c기절: 2.4 §7| §e충전 3/5 §7| §b질투: 12.5
+```
+
+가운데 칸은 능력마다 id를 따로 잡아서 서로 덮어쓰지 않습니다.
+
+```
+set ability info "charge" of player to "&e충전 3/5"
+clear ability info "charge" of player
+```
+
 기절·출혈 같은 상태이상은 플러그인이 남은 시간을 세고 액션바에 그려줍니다.
 여러 능력이 같은 상태이상을 공유할 수 있고, 면역도 만들 수 있습니다.
 

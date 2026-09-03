@@ -144,6 +144,13 @@ object AbilityRegistry {
     fun getCooldown(player: Player, abilityId: String): Int =
         cooldowns[player.uniqueId]?.get(abilityId) ?: 0
 
+    /**
+     * 지금 돌고 있는 쿨타임 전부 (ability id → 남은 tick).
+     * 다 된 쿨타임은 tickCooldowns()가 지우므로 여기에는 남아 있지 않다.
+     */
+    fun getAllCooldowns(player: Player): Map<String, Int> =
+        cooldowns[player.uniqueId] ?: emptyMap()
+
     fun isOnCooldown(player: Player, abilityId: String): Boolean =
         getCooldown(player, abilityId) > 0
 

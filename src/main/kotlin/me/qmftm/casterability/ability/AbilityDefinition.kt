@@ -23,6 +23,9 @@ data class AbilityDefinition(
     val cooldownSeconds: Int,     // 0이면 쿨타임 없음
     val passiveIntervalTicks: Long, // PASSIVE 트리거일 때 주기 (기본 20 = 1초)
 
+    /** 액션바 등에 보여줄 이름. 없으면 id를 그대로 쓴다. */
+    val name: String? = null,
+
     /** PASSIVE + `event:` 일 때 스크립트에 적힌 이벤트 이름 (없으면 null) */
     val eventName: String? = null,
 
@@ -31,4 +34,7 @@ data class AbilityDefinition(
 ) {
     /** 주기가 아니라 이벤트를 받아 발동하는 패시브인지 */
     val isEventDriven: Boolean get() = trigger == AbilityTrigger.PASSIVE && eventClasses.isNotEmpty()
+
+    /** 화면에 보여줄 이름. name을 안 적었으면 id를 그대로 쓴다. */
+    val displayName: String get() = name ?: id
 }

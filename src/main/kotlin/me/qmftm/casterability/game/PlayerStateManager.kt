@@ -128,6 +128,11 @@ object PlayerStateManager {
     fun getAllCustomUi(player: Player): Map<String, String> =
         customUi[player.uniqueId] ?: emptyMap()
 
+    /** 이 플레이어의 부가 정보를 전부 지운다. 상태이상이나 능력 변수는 건드리지 않는다. */
+    fun clearCustomUi(player: Player) {
+        customUi.remove(player.uniqueId)
+    }
+
     // ── 정리 ──────────────────────────────────────────────
 
     fun clearPlayer(player: Player) {
