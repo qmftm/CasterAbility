@@ -12,15 +12,15 @@ import org.bukkit.event.player.PlayerEvent
  * 취소하면 상태이상이 걸리지 않습니다. 면역 능력을 이걸로 만듭니다.
  * duration을 바꾸면 바뀐 시간으로 걸립니다.
  *
- * @param player   상태이상을 받을 플레이어
- * @param effectId 상태이상 id
- * @param duration 걸릴 시간(초). 스크립트에서 바꿀 수 있습니다.
- * @param mode     이미 걸려 있을 때의 처리 방식
+ * @param player        상태이상을 받을 플레이어
+ * @param effectId      상태이상 id
+ * @param durationTicks 걸릴 시간(tick). 스크립트에서 바꿀 수 있습니다.
+ * @param mode          이미 걸려 있을 때의 처리 방식
  */
 class StatusEffectApplyEvent(
     player: Player,
     val effectId: String,
-    var duration: Double,
+    var durationTicks: Int,
     val mode: me.qmftm.casterability.game.StatusEffectMode,
 ) : PlayerEvent(player), Cancellable {
 

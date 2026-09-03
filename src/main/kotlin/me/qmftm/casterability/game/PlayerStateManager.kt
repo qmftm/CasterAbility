@@ -19,7 +19,8 @@ import java.util.UUID
 object PlayerStateManager {
 
     private val playerVariables = mutableMapOf<UUID, MutableMap<String, Any>>()
-    private val effects         = mutableMapOf<UUID, MutableMap<String, Double>>()
+    /** 플레이어 UUID → 상태이상 id → 남은 tick */
+    private val effects         = mutableMapOf<UUID, MutableMap<String, Int>>()
     private val customUi        = mutableMapOf<UUID, MutableMap<String, String>>()
 
     /** 이펙트 id → 액션바에 표시할 이름 (ChzzkAbility의 caEffects) */
@@ -65,7 +66,7 @@ object PlayerStateManager {
     fun effectDisplayName(id: String): String = effectNames[id] ?: id
 
     /**
-     * 상태이상을 건다.
+     * 상태이상을 건다. 시간은 tick 단위.
      *
      * 거는 순간 [StatusEffectApplyEvent]가 발생하므로, 스크립트가 취소하거나
      * 시간을 바꿀 수 있다. 취소되면 아무것도 걸리지 않는다.
@@ -75,18 +76,18 @@ object PlayerStateManager {
     fun applyEffect(
         player: Player,
         effectId: String,
-        durationSeconds: Double,
+        durationTicks: Int,
         mode: StatusEffectMode = StatusEffectMode.LONGEST,
     ): Boolean {
         val current = getEffect(player, effectId)
-        if (mode == StatusEffectMode.IGNORE && current > 0.0) return false
+        if (mode == StatusEffectMode.IGNORE && current > 0) return false
 
-        val event = StatusEffectApplyEvent(player, effectId, durationSeconds, mode)
+        val event = StatusEffectApplyEvent(player, effectId, durationTicks, mode)
         Bukkit.getPluginManager().callEvent(event)
         if (event.isCancelled) return false
 
-        val duration = event.duration
-        if (duration <= 0.0) return false
+        val duration = event.durationTicks
+        if (duration <= 0) return false
 
         val map = effects.getOrPut(player.uniqueId) { mutableMapOf() }
         map[effectId] = when (mode) {
@@ -98,12 +99,13 @@ object PlayerStateManager {
         return true
     }
 
-    fun getEffect(player: Player, effectId: String): Double =
-        effects[player.uniqueId]?.get(effectId) ?: 0.0
+    /** 남은 시간 (tick 단위, 없으면 0) */
+    fun getEffect(player: Player, effectId: String): Int =
+        effects[player.uniqueId]?.get(effectId) ?: 0
 
-    fun hasEffect(player: Player, effectId: String): Boolean = getEffect(player, effectId) > 0.0
+    fun hasEffect(player: Player, effectId: String): Boolean = getEffect(player, effectId) > 0
 
-    fun getAllEffects(player: Player): Map<String, Double> =
+    fun getAllEffects(player: Player): Map<String, Int> =
         effects[player.uniqueId] ?: emptyMap()
 
     fun deleteEffect(player: Player, effectId: String) {
@@ -148,7 +150,7 @@ object PlayerStateManager {
         customUi.clear()
     }
 
-    // ── 틱 처리 (GameScheduler에서 2틱마다 호출) ───────────
+    // ── 틱 처리 (GameScheduler에서 매 틱 호출) ─────────────
 
     fun tickEffects() {
         // 시간이 다 된 것들. 순회 중에 이벤트를 부르면 스크립트가 effects를 건드릴 수
@@ -162,12 +164,11 @@ object PlayerStateManager {
             val iter = map.entries.iterator()
             while (iter.hasNext()) {
                 val e = iter.next()
-                val next = e.value - 0.1
-                if (next <= 0.0) {
+                if (e.value <= 1) {
                     iter.remove()
                     expired += entry.key to e.key
                 } else {
-                    e.setValue(next)
+                    e.setValue(e.value - 1)
                 }
             }
             if (map.isEmpty()) playerIter.remove()

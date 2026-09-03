@@ -15,8 +15,10 @@ import org.bukkit.event.Event
 /**
  * 상태이상 정보를 읽는 Expression들.
  *
+ * 상태이상 시간은 전부 tick 단위입니다. (20 tick = 1초)
+ *
  * 사용 예:
- *   remaining time of status effect "stun" for player   → 2.4 (초)
+ *   remaining ticks of status effect "stun" for player  → 48
  *   status effects of player                            → "stun", "bleed"
  *   status effect duration                              → apply 이벤트 안에서만. set 가능
  */
@@ -29,8 +31,8 @@ class ExprStatusEffectTime : SimpleExpression<Number>() {
             Skript.registerExpression(
                 ExprStatusEffectTime::class.java, Number::class.java,
                 ExpressionType.COMBINED,
-                "[the] remaining [time] of status effect %string% (for|of) %player%",
-                "%player%'s remaining [time] of status effect %string%"
+                "[the] remaining tick[s] of status effect %string% (for|of) %player%",
+                "%player%'s remaining tick[s] of status effect %string%"
             )
         }
     }
@@ -59,7 +61,7 @@ class ExprStatusEffectTime : SimpleExpression<Number>() {
     override fun isSingle() = true
     override fun getReturnType(): Class<out Number> = Number::class.java
     override fun toString(e: Event?, d: Boolean) =
-        "remaining time of status effect ${effectExpr.toString(e, d)} for ${playerExpr.toString(e, d)}"
+        "remaining ticks of status effect ${effectExpr.toString(e, d)} for ${playerExpr.toString(e, d)}"
 }
 
 // ── 걸려 있는 상태이상 목록 ───────────────────────────────
@@ -97,7 +99,7 @@ class ExprStatusEffectsOf : SimpleExpression<String>() {
 // ── apply 이벤트 안에서 걸릴 시간 ─────────────────────────
 
 /**
- * `on status effect apply` 안에서 걸릴 시간을 읽고 바꾼다.
+ * `on status effect apply` 안에서 걸릴 시간(tick)을 읽고 바꾼다.
  *
  * on status effect apply "stun":
  *     if player has ability class "menhera":
@@ -118,7 +120,7 @@ class ExprStatusEffectDuration : SimpleExpression<Number>() {
 
     override fun get(event: Event): Array<Number?> {
         val e = event as? StatusEffectApplyEvent ?: return arrayOfNulls(1)
-        return arrayOf(e.duration)
+        return arrayOf(e.durationTicks)
     }
 
     override fun acceptChange(mode: Changer.ChangeMode): Array<Class<*>>? =
@@ -128,7 +130,7 @@ class ExprStatusEffectDuration : SimpleExpression<Number>() {
         if (mode != Changer.ChangeMode.SET) return
         val e = event as? StatusEffectApplyEvent ?: return
         val value = (delta?.firstOrNull() as? Number)?.toDouble() ?: return
-        e.duration = value.coerceAtLeast(0.0)
+        e.durationTicks = Math.round(value).toInt().coerceAtLeast(0)
     }
 
     override fun isSingle() = true

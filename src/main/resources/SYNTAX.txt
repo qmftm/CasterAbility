@@ -113,11 +113,14 @@ Skript가 아는 이름이면 됩니다. 애드온이 추가한 이벤트도 됩
 
     상태이상  |  능력 부가 정보  |  능력 쿨타임
 
-    §c기절: 2.4 §7| §e충전 3/5 §7| §b질투: 12.5
+    §c기절: 48 §7| §e충전 3/5 §7| §b질투: 13
 
-    상태이상       apply status effect 로 건 것. 남은 초까지 자동으로 표시
+    상태이상       apply status effect 로 건 것. 남은 tick까지 자동으로 표시
     능력 부가 정보  스크립트가 직접 올리는 글. 아래 참고
     능력 쿨타임     지금 도는 쿨타임. ability 블록의 name: 을 이름으로 씁니다
+
+상태이상은 tick, 쿨타임은 초로 보여줍니다. (20 tick = 1초)
+쿨타임 초는 올림이라, 남아 있는데 0으로 보이는 일이 없습니다.
 
 셋 다 비면 액션바를 한 번 지우고, 그 뒤로는 아무것도 보내지 않습니다.
 
@@ -152,7 +155,7 @@ Skript가 아는 이름이면 됩니다. 애드온이 추가한 이벤트도 됩
         set the name of status effect "stun" to "&c기절"
         set the name of status effect "bleed" to "&4출혈"
 
-    액션바 예시:  §c기절: 2.4 §7| §4출혈: 5.0
+    액션바 예시:  §c기절: 48 §7| §4출혈: 100
 
 이미 걸려 있는데 또 걸면
     apply    더 긴 쪽만 남깁니다. 짧게 다시 걸어도 남은 시간이 줄지 않습니다. (기본)
@@ -165,6 +168,12 @@ Skript가 아는 이름이면 됩니다. 애드온이 추가한 이벤트도 됩
     stack status effect "bleed" on event-entity for 2 seconds
     refresh status effect "frost" on player for 5 seconds
     apply status effect "mark" to player for 10 seconds if not active
+
+시간은 초로도 틱으로도 적을 수 있습니다. 단위는 반드시 붙이세요.
+안에서는 tick으로 들고 있고, 액션바와 remaining ticks 도 tick으로 나옵니다.
+
+    apply status effect "stun" to event-entity for 3 seconds
+    apply status effect "stun" to event-entity for 60 ticks    ← 위와 같음
 
 여러 명에게 한 번에 걸 수도 있습니다.
 
@@ -179,7 +188,7 @@ Skript가 아는 이름이면 됩니다. 애드온이 추가한 이벤트도 됩
     이벤트 안에서 쓸 수 있는 값
         player                  상태이상을 받는 플레이어
         event-string            상태이상 id
-        status effect duration  걸릴 시간(초). apply 안에서는 바꿀 수도 있습니다
+        status effect duration  걸릴 시간(tick). apply 안에서는 바꿀 수도 있습니다
 
     cancel event 를 하면 상태이상이 걸리지 않습니다. 면역 능력을 이걸로 만듭니다.
 
@@ -241,7 +250,7 @@ Skript가 아는 이름이면 됩니다. 애드온이 추가한 이벤트도 됩
     max cooldown of ability %string%     → 정의에 적힌 쿨타임 초 (남은 쿨타임 아님)
 
 표현식 — 상태이상
-    remaining time of status effect %string% for %player%   → 2.4 (초)
+    remaining ticks of status effect %string% for %player%  → 48 (tick)
     status effects of %player%           → 걸려 있는 상태이상 id 목록
     %player%'s status effects            → 위와 같음
     status effect duration               → apply 이벤트 안에서만. set 가능
@@ -274,10 +283,10 @@ Skript가 아는 이름이면 됩니다. 애드온이 추가한 이벤트도 됩
     trigger ability %string% for %player% [on %entity%]
 
 효과 — 상태이상
-    apply status effect %string% to %player% for %number% seconds
-    apply status effect %string% to %player% for %number% seconds if not active
-    stack status effect %string% on %player% for %number% seconds
-    refresh status effect %string% on %player% for %number% seconds
+    apply status effect %string% to %player% for %number% (seconds|ticks)
+    apply status effect %string% to %player% for %number% (seconds|ticks) if not active
+    stack status effect %string% on %player% for %number% (seconds|ticks)
+    refresh status effect %string% on %player% for %number% (seconds|ticks)
     remove status effect %string% from %player%
     clear all status effects from %player%
     set the name of status effect %string% to %string%

@@ -28,45 +28,49 @@ import org.bukkit.event.Event
 class EffApplyStatusEffect : Effect() {
     companion object {
         fun register() {
+            // 시간 단위는 (1¦초 | 2¦틱) 중에 골라 적는다
             Skript.registerEffect(
                 EffApplyStatusEffect::class.java,
                 // 0: 더 긴 쪽만 남긴다 (기본)
-                "apply status effect %string% to %player% for %number% [second[s]]",
+                "apply status effect %string% to %player% for %number% (1¦second[s]|2¦tick[s])",
                 // 1: 남은 시간에 더한다
-                "stack status effect %string% on %player% for %number% [second[s]]",
+                "stack status effect %string% on %player% for %number% (1¦second[s]|2¦tick[s])",
                 // 2: 무조건 새 값으로 덮어쓴다
-                "refresh status effect %string% on %player% for %number% [second[s]]",
+                "refresh status effect %string% on %player% for %number% (1¦second[s]|2¦tick[s])",
                 // 3: 이미 걸려 있으면 아무것도 하지 않는다
-                "apply status effect %string% to %player% for %number% [second[s]] if not active"
+                "apply status effect %string% to %player% for %number% (1¦second[s]|2¦tick[s]) if not active"
             )
         }
     }
 
     private lateinit var effectExpr: Expression<String>
     private lateinit var playerExpr: Expression<Player>
-    private lateinit var secondsExpr: Expression<Number>
+    private lateinit var durationExpr: Expression<Number>
     private var mode = StatusEffectMode.LONGEST
+    private var ticksPerUnit = 20 // 초로 적었으면 20, 틱으로 적었으면 1
 
     @Suppress("UNCHECKED_CAST")
     override fun init(exprs: Array<out Expression<*>>, i: Int, k: Kleenean, p: SkriptParser.ParseResult): Boolean {
-        effectExpr  = exprs[0] as Expression<String>
-        playerExpr  = exprs[1] as Expression<Player>
-        secondsExpr = exprs[2] as Expression<Number>
+        effectExpr   = exprs[0] as Expression<String>
+        playerExpr   = exprs[1] as Expression<Player>
+        durationExpr = exprs[2] as Expression<Number>
         mode = when (i) {
             1    -> StatusEffectMode.STACK
             2    -> StatusEffectMode.REPLACE
             3    -> StatusEffectMode.IGNORE
             else -> StatusEffectMode.LONGEST
         }
+        ticksPerUnit = if (p.mark == 2) 1 else 20
         return true
     }
 
     override fun execute(event: Event) {
-        val id      = effectExpr.getSingle(event)  ?: return
-        val seconds = secondsExpr.getSingle(event)?.toDouble() ?: return
+        val id       = effectExpr.getSingle(event) ?: return
+        val duration = durationExpr.getSingle(event)?.toDouble() ?: return
+        val ticks    = Math.round(duration * ticksPerUnit).toInt()
         // 여러 명에게 한 번에 걸 수 있게 한다 — loop 없이 all players 같은 것에 바로 쓴다
         for (p in playerExpr.getArray(event)) {
-            PlayerStateManager.applyEffect(p, id, seconds, mode)
+            PlayerStateManager.applyEffect(p, id, ticks, mode)
         }
     }
 

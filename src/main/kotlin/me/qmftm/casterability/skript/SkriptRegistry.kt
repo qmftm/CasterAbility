@@ -111,14 +111,14 @@ object SkriptRegistry {
             Converter { it.abilityId }
         )
 
-        // 상태이상 이벤트: event-string → 상태이상 id, event-number → 걸릴 시간(초)
+        // 상태이상 이벤트: event-string → 상태이상 id, event-number → 걸릴 시간(tick)
         EventValues.registerEventValue(
             StatusEffectApplyEvent::class.java, String::class.java,
             Converter { it.effectId }
         )
         EventValues.registerEventValue(
             StatusEffectApplyEvent::class.java, Number::class.java,
-            Converter { it.duration }
+            Converter { it.durationTicks }
         )
         EventValues.registerEventValue(
             StatusEffectExpireEvent::class.java, String::class.java,

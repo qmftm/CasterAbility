@@ -10,7 +10,7 @@ import org.bukkit.scheduler.BukkitTask
  *
  * ChzzkAbility scheduler.sk 대비 개선점:
  * - UI 갱신이 2틱/20틱 두 곳에서 중복 실행되던 것을 2틱 한 곳으로 통합
- * - 이펙트(0.1초 단위)와 쿨타임(1틱 단위)의 주기를 각자 맞는 값으로 분리
+ * - 상태이상과 쿨타임은 tick 단위라 매 틱, UI는 2틱마다로 주기를 나눔
  * - 모든 태스크를 필드로 들고 있다가 stop()에서 확실히 취소 (태스크 누수 방지)
  */
 object GameScheduler {
@@ -27,10 +27,10 @@ object GameScheduler {
         stop()
         val scheduler = plugin.server.scheduler
 
-        // 이펙트: 남은 시간을 0.1초씩 깎으므로 2틱(0.1초) 주기
+        // 상태이상: 남은 시간을 tick 단위로 들고 호출당 1씩 깎으므로 매 틱 실행
         effectTask = scheduler.runTaskTimer(plugin, Runnable {
             PlayerStateManager.tickEffects()
-        }, 0L, 2L)
+        }, 0L, 1L)
 
         // 쿨타임: AbilityRegistry가 '틱' 단위로 저장하고 호출당 1씩 깎으므로 매 틱 실행.
         // (20틱 주기로 돌리면 쿨타임이 20배로 늘어난다)
