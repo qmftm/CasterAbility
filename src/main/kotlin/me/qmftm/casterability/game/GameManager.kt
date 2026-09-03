@@ -42,7 +42,6 @@ class GameManager(private val plugin: CasterAbility) {
     private var spawnZ = 0.0
 
     private val passiveTasks = mutableListOf<BukkitTask>()
-    private var cooldownTask: BukkitTask? = null
 
     private var gameWorld: World? = null
 
@@ -199,16 +198,12 @@ class GameManager(private val plugin: CasterAbility) {
     // ── 게임 내 스케줄러 ──────────────────────────────────
 
     private fun startCooldownTicker() {
-        // ChzzkAbility 개선: scheduler.sk의 중복 UI 업데이트 제거
-        // UI는 2 틱마다만, 쿨타임은 20 틱마다 처리
-        GameScheduler.startSchedulers(plugin)
-
-        // 2 틱마다 UI 업데이트 (중복 제거됨)
-        Bukkit.getScheduler().runTaskTimer(plugin, Runnable {
-            if (!isRunning || phase != GamePhase.IN_GAME) return@Runnable
-            gamePlayers.mapNotNull { Bukkit.getPlayer(it) }
-                .forEach { GameUIRenderer.updateActionBar(it) }
-        }, 0L, 2L)
+        // 쿨타임(매 틱) · 이펙트(2틱) · 액션바 UI(2틱)를 GameScheduler가 모두 관리한다.
+        // 태스크는 GameScheduler가 들고 있다가 stopGame()에서 취소된다.
+        GameScheduler.start(plugin) {
+            if (!isRunning || phase != GamePhase.IN_GAME) emptyList()
+            else gamePlayers.mapNotNull { Bukkit.getPlayer(it) }
+        }
     }
 
     private fun startPassiveTasks() {
@@ -276,19 +271,16 @@ class GameManager(private val plugin: CasterAbility) {
 
         passiveTasks.forEach { it.cancel() }
         passiveTasks.clear()
-        cooldownTask?.cancel()
-        cooldownTask = null
+        // 쿨타임/이펙트/UI 태스크 취소 — 액션바를 지우기 전에 멈춰야 다시 그려지지 않는다
+        GameScheduler.stop()
 
         gamePlayers.mapNotNull { Bukkit.getPlayer(it) }.forEach { p ->
             p.closeInventory()
             p.removePotionEffect(PotionEffectType.INVISIBILITY)
-            // ChzzkAbility 개선: 플레이어 상태 정리 (메모리 누수 방지)
-            PlayerStateManager.clearPlayer(p)
+            p.sendActionBar("".toComponent())
         }
         AbilityRegistry.clearAll()
-        // ChzzkAbility 개선: PlayerStateManager 전체 정리
         PlayerStateManager.clearAll()
-        GameScheduler.stopSchedulers()
         GameUIRenderer.clearAll()
         gamePlayers.clear()
         bossBar.deleteAll()
