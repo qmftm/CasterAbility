@@ -1,7 +1,7 @@
 name: CasterAbility
 version: '${project.version}'
 main: me.qmftm.casterability.CasterAbility
-api-version: '1.21'
+api-version: '26.2'
 description: Skript 기반 커스텀 능력자 시스템
 authors: [qmftm]
 depend: [Skript]

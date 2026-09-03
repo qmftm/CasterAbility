@@ -83,6 +83,7 @@ plugins/Skript/scripts/CasterAbility/classic/
 
 **🔗 Download**
 
-1.21.8 버전으로 제작되었으며, 1.21+버전의 사용을 권장드립니다.
+Minecraft **26.2** 버전으로 제작되었습니다.
 
-**Skript 플러그인이 반드시 필요합니다.** (2.14.3 기준)
+- 서버: PaperMC 26.2 (**Java 25** 필요)
+- **Skript 플러그인이 반드시 필요합니다.** (2.16.2 기준)

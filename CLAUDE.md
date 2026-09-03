@@ -12,7 +12,7 @@ The shaded JAR is output to `target/`. The default Maven goal is `clean package`
 
 ## Project Overview
 
-**CasterAbility** is a PaperMC plugin (API 1.21, targeting 1.21.8) written in Kotlin that extends Skript with custom syntax. It hard-depends on the `Skript` plugin at runtime.
+**CasterAbility** is a PaperMC plugin (API 26.2) written in Kotlin that extends Skript with custom syntax. It hard-depends on the `Skript` plugin at runtime.
 
 ## Architecture
 
@@ -28,6 +28,10 @@ The shaded JAR is output to `target/`. The default Maven goal is `clean package`
 
 ## Dependencies
 
-- **Paper API 1.21.8-R0.1-SNAPSHOT** — provided at runtime (do not shade)
-- **Skript 2.14.3** — provided at runtime (do not shade)
-- **kotlin-stdlib-jdk8 1.9.22** — shaded into the output JAR
+- **Paper API 26.2.build.121-stable** — provided at runtime (do not shade)
+- **Skript 2.16.2** — provided at runtime (do not shade)
+- **kotlin-stdlib-jdk8 2.4.10** — shaded into the output JAR
+
+Paper 26.2 is built for Java 25, so the server needs a Java 25 runtime.
+The plugin itself targets Java 21 bytecode (`jvmTarget` 21), which runs fine on
+Java 25 — bump both `java.version` and `jvmTarget` only if you build on a JDK 25.
