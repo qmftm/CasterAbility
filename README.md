@@ -125,10 +125,10 @@ force player to use ability "yandere_jealousy" on event-entity
 
 ```
 plugins/Skript/scripts/CasterAbility/classic/
-├── yandere.sk     얀데레   (A) — 집착 대상, 거리 기반 공격력, 질투
-├── menhera.sk     멘헤라   (B) — 자연 회복 차단, 피격 재생, 자신감 해소
-├── pig.sk         돼지     (B) — 몸무게, 공격력·이동속도 교환, 폭주
-└── excalibur.sk   엑스칼리버 (A) — 전용 검, 구속 해방 스택
+├── yandere.sk     얀데레     (A등급)
+├── menhera.sk     멘헤라     (B등급)
+├── pig.sk         돼지       (B등급)
+└── excalibur.sk   엑스칼리버 (A등급)
 ```
 
 처음 설치한 직후에는 `/sk reload all` 을 한 번 하거나 서버를 재시작하세요.
