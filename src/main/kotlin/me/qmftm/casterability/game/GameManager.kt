@@ -170,6 +170,7 @@ class GameManager(private val plugin: CasterAbility) {
             goInGame()
             return
         }
+        // ChzzkAbility 개선: 무적 시간 시작 시에만 숨김 적용 (반복 제거)
         if (cfg.invincibilityInvisible) {
             gamePlayers.mapNotNull { Bukkit.getPlayer(it) }.forEach { p ->
                 p.addPotionEffect(PotionEffect(
@@ -181,6 +182,7 @@ class GameManager(private val plugin: CasterAbility) {
             "ca.invincibility", "&b무적 시간", cfg.invincibilitySecond,
             BossBar.Color.BLUE, cfg.invincibilityShowBossbar, colorChange = true, broadcastCountdown = true
         ) {
+            // ChzzkAbility 개선: 무적 종료 시 숨김 해제
             gamePlayers.mapNotNull { Bukkit.getPlayer(it) }
                 .forEach { it.removePotionEffect(PotionEffectType.INVISIBILITY) }
             goInGame()
@@ -197,10 +199,16 @@ class GameManager(private val plugin: CasterAbility) {
     // ── 게임 내 스케줄러 ──────────────────────────────────
 
     private fun startCooldownTicker() {
-        cooldownTask = Bukkit.getScheduler().runTaskTimer(plugin, Runnable {
-            if (!isRunning) { cooldownTask?.cancel(); return@Runnable }
-            AbilityRegistry.tickCooldowns()
-        }, 0L, 1L)
+        // ChzzkAbility 개선: scheduler.sk의 중복 UI 업데이트 제거
+        // UI는 2 틱마다만, 쿨타임은 20 틱마다 처리
+        GameScheduler.startSchedulers(plugin)
+
+        // 2 틱마다 UI 업데이트 (중복 제거됨)
+        Bukkit.getScheduler().runTaskTimer(plugin, Runnable {
+            if (!isRunning || phase != GamePhase.IN_GAME) return@Runnable
+            gamePlayers.mapNotNull { Bukkit.getPlayer(it) }
+                .forEach { GameUIRenderer.updateActionBar(it) }
+        }, 0L, 2L)
     }
 
     private fun startPassiveTasks() {
@@ -274,8 +282,14 @@ class GameManager(private val plugin: CasterAbility) {
         gamePlayers.mapNotNull { Bukkit.getPlayer(it) }.forEach { p ->
             p.closeInventory()
             p.removePotionEffect(PotionEffectType.INVISIBILITY)
+            // ChzzkAbility 개선: 플레이어 상태 정리 (메모리 누수 방지)
+            PlayerStateManager.clearPlayer(p)
         }
         AbilityRegistry.clearAll()
+        // ChzzkAbility 개선: PlayerStateManager 전체 정리
+        PlayerStateManager.clearAll()
+        GameScheduler.stopSchedulers()
+        GameUIRenderer.clearAll()
         gamePlayers.clear()
         bossBar.deleteAll()
 
