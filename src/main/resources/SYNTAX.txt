@@ -232,7 +232,7 @@ Skript가 아는 이름이면 됩니다. 애드온이 추가한 이벤트도 됩
     tier display of %player%             → "§c§lA" (색이 들어간 등급 표시)
     abilities of %player%                → 그 플레이어가 가진 능력 id 목록
     %player%'s abilities                 → 위와 같음
-    cooldown of %player% for ability %string%   → 남은 초
+    cooldown of %player% for ability %string%   → 남은 초 (올림)
     ability damage                       → 피해량 (set 가능)
 
 표현식 — 등록된 정의 기준 (플레이어와 무관)

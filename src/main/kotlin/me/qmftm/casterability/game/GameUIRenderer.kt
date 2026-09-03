@@ -54,7 +54,7 @@ object GameUIRenderer {
             sb.append(text)
         }
 
-        // 3. 능력 쿨타임 — 초 단위. 남아 있는데 0으로 보이지 않게 올림한다
+        // 3. 능력 쿨타임 — 초 단위(올림). AbilityRegistry.getCooldownSeconds()와 같은 공식.
         cooldowns.forEach { (abilityId, ticks) ->
             sb.separate()
             val name = AbilityRegistry.getAbility(abilityId)?.displayName ?: abilityId

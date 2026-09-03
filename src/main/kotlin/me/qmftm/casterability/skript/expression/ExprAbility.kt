@@ -143,8 +143,7 @@ class ExprAbilityCooldown : SimpleExpression<Int>() {
     override fun get(event: Event): Array<Int?> {
         val p  = playerExpr.getSingle(event)  ?: return arrayOfNulls(1)
         val id = abilityExpr.getSingle(event) ?: return arrayOfNulls(1)
-        val ticks = AbilityRegistry.getCooldown(p, id)
-        return arrayOf(ticks / 20) // tick → 초
+        return arrayOf(AbilityRegistry.getCooldownSeconds(p, id))
     }
 
     override fun isSingle() = true

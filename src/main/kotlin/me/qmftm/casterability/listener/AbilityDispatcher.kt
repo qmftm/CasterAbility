@@ -44,8 +44,8 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
             }
             .forEach { def ->
                 if (AbilityRegistry.isOnCooldown(p, def.id)) {
-                    val remain = AbilityRegistry.getCooldown(p, def.id) / 20
-                    p.sendMessage("§c[${def.id}] 쿨타임 ${remain}초 남음")
+                    val remain = AbilityRegistry.getCooldownSeconds(p, def.id)
+                    p.sendMessage("§c[${def.displayName}] 쿨타임 ${remain}초 남음")
                     return@forEach
                 }
                 val used = dispatch(p, def.id, trigger)

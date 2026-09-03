@@ -145,6 +145,13 @@ object AbilityRegistry {
         cooldowns[player.uniqueId]?.get(abilityId) ?: 0
 
     /**
+     * 쿨타임 조회 (초 단위, 올림). 화면·채팅에 보여줄 때는 이걸 쓴다.
+     * 내림으로 하면 남은 시간이 있는데도 0초로 보이는 순간이 생긴다.
+     */
+    fun getCooldownSeconds(player: Player, abilityId: String): Int =
+        (getCooldown(player, abilityId) + 19) / 20
+
+    /**
      * 지금 돌고 있는 쿨타임 전부 (ability id → 남은 tick).
      * 다 된 쿨타임은 tickCooldowns()가 지우므로 여기에는 남아 있지 않다.
      */
