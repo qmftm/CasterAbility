@@ -124,8 +124,11 @@ Effect는 한 줄짜리 SimpleNode에서만 매칭됩니다. 즉 스크립트에
     plugins/Skript/scripts/CasterAbility/classic/menhera.sk
 
 Skript는 자기 scripts 폴더 아래만 읽기 때문에, 설치하자마자 기본 능력으로
-잡히려면 여기여야 합니다. Skript를 못 찾으면 `plugins/CasterAbility/classic/`
-에 꺼내두고 옮기라고 경고를 남깁니다.
+잡히려면 여기여야 합니다. 다른 위치로 물러나지 않습니다 — 플러그인 폴더에
+두면 손으로 옮기기 전까지 기본 능력이 되지 않기 때문입니다.
+Skript를 못 찾으면 설치를 건너뜁니다. (`plugin.yml`에 `depend`로 걸려 있어
+정상적인 서버에서는 일어나지 않습니다.)
+`scripts` 폴더가 아직 없으면 통째로 만듭니다.
 
 설치 판단은 **classic 폴더의 존재 여부**로 합니다. 파일 단위가 아닙니다.
 
