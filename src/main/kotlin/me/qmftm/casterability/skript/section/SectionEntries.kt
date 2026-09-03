@@ -28,5 +28,20 @@ internal fun SectionNode.readEntries(): Map<String, String> {
     return out
 }
 
+/**
+ * 값 대신 여러 줄을 갖는 항목을 읽습니다.
+ *
+ *     description:
+ *         "&f첫 줄"
+ *         "&f둘째 줄"
+ *
+ * 해당 이름의 하위 블록이 없으면 빈 목록을 돌려줍니다.
+ */
+internal fun SectionNode.readLines(key: String): List<String> {
+    val target = this.firstOrNull { it is SectionNode && it.key?.trim()?.trimEnd(':')?.lowercase() == key }
+        as? SectionNode ?: return emptyList()
+    return target.mapNotNull { it.key?.trim()?.unquote() }
+}
+
 private fun String.unquote(): String =
     if (length >= 2 && startsWith('"') && endsWith('"')) substring(1, length - 1) else this

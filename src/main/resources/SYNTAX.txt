@@ -32,17 +32,22 @@ Skript가 자기 scripts 폴더 아래를 전부 읽기 때문에 그대로 동�
         ability class "yandere":
             name: "얀데레"
             tier: 2
+            description:
+                "&d[&7패시브 &f- &d처음 본 순간]"
+                "&f처음 공격한 플레이어를 &c집착 대상&f으로 지정합니다."
 
         ability "yandere_jealousy":
             class: "yandere"
             name: "질투"
             trigger: right_click
-            item: blaze_rod
+            item: iron ingot
             cooldown: 45
 
 ability class 항목
-    name    표시 이름. 없으면 id를 그대로 씁니다.
-    tier    0=Legendary 1=S 2=A 3=B 4=C. 기본 4.
+    name         표시 이름. 없으면 id를 그대로 씁니다.
+    tier         0=Legendary 1=S 2=A 3=B 4=C. 기본 4.
+    description  추첨·목록 GUI에 보여줄 설명. 한 줄에 하나씩 따옴표로 적습니다.
+                 & 색 코드를 쓸 수 있고, 빈 줄("")로 문단을 나눌 수 있습니다.
 
 ability 항목
     class               (필수) 어느 ability class에 속하는지

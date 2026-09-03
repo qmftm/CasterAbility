@@ -18,6 +18,9 @@ import org.bukkit.event.Event
  *     ability class "yandere":
  *         name: "얀데레"
  *         tier: 2
+ *         description:
+ *             "&d[&7패시브 &f- &d처음 본 순간]"
+ *             "&f처음 공격한 플레이어를 &c집착 대상&f으로 지정합니다."
  *
  * tier: 0=Legendary 1=S 2=A 3=B 4=C
  *
@@ -35,6 +38,7 @@ class SecAbilityClass : Section() {
     private lateinit var classId: Expression<String>
     private var displayName: String = ""
     private var tier: Int = 4
+    private var description: List<String> = emptyList()
 
     @Suppress("UNCHECKED_CAST")
     override fun init(
@@ -64,6 +68,8 @@ class SecAbilityClass : Section() {
             }
             tier = parsed
         }
+
+        description = sectionNode.readLines("description")
         return true
     }
 
@@ -71,7 +77,12 @@ class SecAbilityClass : Section() {
         val id = classId.getSingle(event)
         if (id != null) {
             AbilityRegistry.registerClass(
-                AbilityClass(id = id, name = displayName.ifEmpty { id }, tier = tier)
+                AbilityClass(
+                    id = id,
+                    name = displayName.ifEmpty { id },
+                    tier = tier,
+                    description = description,
+                )
             )
         }
         // 블록 내용은 실행하지 않고 다음 줄로 넘어간다

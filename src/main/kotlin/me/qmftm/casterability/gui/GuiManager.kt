@@ -84,9 +84,16 @@ class GuiManager(private val plugin: CasterAbility) {
         val abilities = AbilityRegistry.abilitiesOfClass(cls.id)
         val lore = mutableListOf<String>()
         lore.add("§7등급: ${cls.tierDisplay}")
+
+        // 스크립트가 적어둔 설명이 있으면 그대로 보여준다 (& 색 코드 → §)
+        if (cls.description.isNotEmpty()) {
+            lore.add("")
+            cls.description.forEach { lore.add(it.replace('&', '§')) }
+        }
+
         lore.add("")
         abilities.forEach { ab ->
-            lore.add("§f· ${ab.id} §7[${ab.trigger.skriptName}]" +
+            lore.add("§f· ${ab.displayName} §7[${ab.trigger.skriptName}]" +
                 if (ab.cooldownSeconds > 0) " §8(${ab.cooldownSeconds}s)" else "")
         }
         return makeItem(mat, "§f${cls.name} §8- ${cls.tierDisplay}", *lore.toTypedArray())

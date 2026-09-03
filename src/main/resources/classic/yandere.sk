@@ -1,86 +1,104 @@
 # ─────────────────────────────────────────────────────────
-#  얀데레 (A등급) — CasterAbility 예제
+#  얀데레 (A등급) — CasterAbility 기본 능력
 #
 #  패시브 "처음 본 순간"
-#    처음 때린 상대를 집착 대상으로 지정합니다.
-#    집착 대상과 가까이 있으면 주는 피해가 늘고 받는 피해가 줄어듭니다.
-#    집착 대상이 죽으면 지정이 풀려 다시 지정할 수 있습니다.
+#    처음 공격한 플레이어를 집착 대상으로 지정합니다.
+#    집착 대상과 가까울수록 공격력이 올라갑니다.
+#    집착 대상이 남을 때리면 그 사람을 방해자로 10초간 기억합니다.
 #
-#  철괴 우클릭 "질투" (쿨타임 45초)
-#    집착 대상이 마지막으로 때린 상대가 내가 아니면,
-#    그 상대와 집착 대상 둘 다에게 마지막 피해의 5배를 줍니다.
+#  철괴 우클릭 "질투" (쿨타임 60초)
+#    방해자와 집착 대상 둘 다에게
+#    집착 대상이 방해자에게 마지막으로 입힌 피해의 150%를 줍니다.
 # ─────────────────────────────────────────────────────────
 
 options:
-    distance: 20
-    percent: 25
-    multiple: 5
+    max_bonus: 100
+    disturber_time: 10
+    jealousy_percent: 150
+    cooltime: 60
 
 
 on load:
+    set the name of status effect "yandere_disturber" to "&c방해자"
+
     ability class "yandere":
         name: "얀데레"
         tier: 2
+        description:
+            "&d[&7패시브 &f- &d처음 본 순간]"
+            "&f처음 공격한 플레이어를 &c집착 대상&f으로 지정합니다."
+            "&c집착 대상&f이 죽을 시 다시 지정할 수 있습니다."
+            "&f(&c%{@max_bonus}%&f - &c집착 대상&f과의 거리)&f%% 만큼 공격력이 증가합니다."
+            "&c집착 대상&f이 다른 플레이어를 공격하면 해당 플레이어를"
+            "&c방해자&f로 &c%{@disturber_time}%초&f간 기억합니다."
+            ""
+            "&d[&7철괴 우클릭 &f- &d질투] &7(쿨타임 %{@cooltime}%초)"
+            "&c집착 대상&f에게 현재 &c방해자&f가 존재할 경우 발동합니다."
+            "&c방해자&f와 &c집착 대상&f에게 각각 &c집착 대상&f이 방해자에게"
+            "&f마지막으로 입힌 피해의 &c%{@jealousy_percent}%%%&f만큼 피해를 줍니다."
 
     ability "yandere_obsession":
         class: "yandere"
+        name: "처음 본 순간"
         trigger: on_hit
-
-    ability "yandere_devotion":
-        class: "yandere"
-        trigger: on_damaged
 
     ability "yandere_jealousy":
         class: "yandere"
+        name: "질투"
         trigger: right_click
-        item: blaze_rod
-        cooldown: 45
+        item: iron ingot
+        cooldown: 60
 
 
-# ── 누가 누구를 얼마로 때렸는지 기록 ──────────────────────
-# 질투 스킬이 "집착 대상의 마지막 공격"을 참조하기 때문에 필요합니다.
+# ── 때릴 때: 집착 대상 지정 / 거리에 따른 공격력 증가 ─────
+
+on ability use "yandere_obsession":
+    set {_victim} to event-entity
+    {_victim} is a player
+    {_victim} is not player
+
+    set {_obsession} to {yandere.obsession::%player's uuid%}
+
+    # 아직 집착 대상이 없으면 이번에 때린 상대로 지정한다
+    if {_obsession} is not set:
+        set {yandere.obsession::%player's uuid%} to {_victim}
+        set ability info "obsession" of player to "&d집착 대상: &f%{_victim}%"
+        send "&d%{_victim}%&f님을 &c집착 대상&f으로 지정하셨습니다." to player
+        stop
+
+    # 집착 대상에게 가까울수록 강해진다. 누구를 때리든 적용된다.
+    {_obsession} is online
+    world of {_obsession} is world of player
+
+    set {_bonus} to {@max_bonus} - (distance between player and {_obsession})
+    if {_bonus} <= 0:
+        stop
+
+    set ability damage to ability damage * (1 + {_bonus} / 100)
+
+
+# ── 집착 대상이 남을 때리면 그 사람을 방해자로 기억 ───────
+# 얀데레 본인이 끼어 있지 않은 싸움이라 일반 이벤트로 받는다.
 
 on damage:
     attacker is a player
     victim is a player
-    set {yandere.lasthit::%attacker's uuid%::target} to victim
-    set {yandere.lasthit::%attacker's uuid%::damage} to damage
+    attacker is not victim
+
+    loop all players:
+        if {yandere.obsession::%loop-player's uuid%} is attacker:
+            set {yandere.disturber::%loop-player's uuid%} to victim
+            set {yandere.disturber.damage::%loop-player's uuid%} to damage
+            # 새로 때릴 때마다 10초를 다시 채운다
+            refresh status effect "yandere_disturber" on loop-player for {@disturber_time} seconds
+            send "&c%victim%&f님이 &c집착 대상&f을 방해하고 있습니다." to loop-player
 
 
-# ── 때릴 때: 집착 대상 지정 / 피해 증가 ───────────────────
+# ── 10초가 지나면 방해자를 잊는다 ─────────────────────────
 
-on ability use "yandere_obsession":
-    set {_victim} to event-entity
-    if {_victim} is not a player:
-        stop
-
-    # 아직 집착 대상이 없으면 이번에 때린 상대로 지정
-    if {yandere.obsession::%player's uuid%} is not set:
-        set {yandere.obsession::%player's uuid%} to {_victim}
-        send "&d%{_victim}%님을 집착 대상으로 지정하셨습니다." to player
-        stop
-
-    # 집착 대상이 아니면 보너스 없음
-    if {yandere.obsession::%player's uuid%} is not {_victim}:
-        stop
-    if distance between player and {_victim} > {@distance}:
-        stop
-
-    set ability damage to ability damage * (1 + {@percent} / 100)
-
-
-# ── 맞을 때: 집착 대상에게 맞으면 피해 감소 ───────────────
-
-on ability use "yandere_devotion":
-    set {_attacker} to event-entity
-    if {_attacker} is not a player:
-        stop
-    if {yandere.obsession::%player's uuid%} is not {_attacker}:
-        stop
-    if distance between player and {_attacker} > {@distance}:
-        stop
-
-    set ability damage to ability damage * (1 - {@percent} / 100)
+on status effect expire "yandere_disturber":
+    delete {yandere.disturber::%player's uuid%}
+    delete {yandere.disturber.damage::%player's uuid%}
 
 
 # ── 철괴 우클릭: 질투 ─────────────────────────────────────
@@ -88,41 +106,38 @@ on ability use "yandere_devotion":
 
 on ability use "yandere_jealousy":
     set {_obsession} to {yandere.obsession::%player's uuid%}
-
     if {_obsession} is not set:
         send "&c집착 대상이 없습니다." to player
         cancel event
         stop
+
+    set {_disturber} to {yandere.disturber::%player's uuid%}
+    if {_disturber} is not set:
+        send "&c집착 대상을 방해하는 사람이 없습니다." to player
+        cancel event
+        stop
+
     if {_obsession} is not online:
         send "&c집착 대상이 접속 중이 아닙니다." to player
         cancel event
         stop
-
-    set {_target} to {yandere.lasthit::%{_obsession}'s uuid%::target}
-    if {_target} is not set:
-        send "&c집착 대상이 아직 아무도 공격하지 않았습니다." to player
-        cancel event
-        stop
-    if {_target} is player:
-        send "&c집착 대상이 마지막으로 공격한 대상이 자신입니다." to player
-        cancel event
-        stop
-    if {_target} is not online:
-        send "&c그 대상이 접속 중이 아닙니다." to player
+    if {_disturber} is not online:
+        send "&c방해자가 접속 중이 아닙니다." to player
         cancel event
         stop
 
-    set {_damage} to {yandere.lasthit::%{_obsession}'s uuid%::damage} * {@multiple}
-    damage {_target} by {_damage}
+    set {_damage} to {yandere.disturber.damage::%player's uuid%} * {@jealousy_percent} / 100
+    damage {_disturber} by {_damage}
     damage {_obsession} by {_damage}
-    send "&d질투! &f%{_target}%&f와 &c%{_obsession}%&f에게 &c%{_damage}%&f의 피해를 주었습니다." to player
+
+    send "&d질투! &c%{_disturber}%&f와 &c%{_obsession}%&f에게 &c%{_damage}%&f의 피해를 주었습니다." to player
 
 
 # ── 집착 대상이 죽으면 지정 해제 ──────────────────────────
 
 on death of player:
-    delete {yandere.lasthit::%victim's uuid%::*}
     loop all players:
         if {yandere.obsession::%loop-player's uuid%} is victim:
             delete {yandere.obsession::%loop-player's uuid%}
+            clear ability info "obsession" of loop-player
             send "&7집착 대상이 사망하여 지정이 해제되었습니다." to loop-player
