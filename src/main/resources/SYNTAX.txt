@@ -105,6 +105,72 @@ Skript가 아는 이름이면 됩니다. 애드온이 추가한 이벤트도 됩
       /ca reload → /sk reload all 후에 게임을 다시 시작하세요.
 
 
+상태이상
+--------
+기절, 출혈, 빙결처럼 여러 능력이 같이 쓰는 효과를 걸 수 있습니다.
+남은 시간은 플러그인이 알아서 깎고, 액션바에 자동으로 표시됩니다.
+
+    on ability use "yandere_jealousy":
+        apply status effect "stun" to event-entity for 3 seconds
+
+    on ability use "menhera_love":
+        if player has status effect "stun":
+            send "&c기절해서 능력을 쓸 수 없습니다." to player
+            cancel event
+
+액션바 표시 이름은 on load 에서 한 번 정해둡니다. 안 정하면 id가 그대로 나옵니다.
+
+    on load:
+        set the name of status effect "stun" to "&c기절"
+        set the name of status effect "bleed" to "&4출혈"
+
+    액션바 예시:  §c기절: 2.4 §7| §4출혈: 5.0
+
+이미 걸려 있는데 또 걸면
+    apply    더 긴 쪽만 남깁니다. 짧게 다시 걸어도 남은 시간이 줄지 않습니다. (기본)
+    stack    남은 시간에 더합니다. 여러 번 걸수록 길어집니다.
+    refresh  남은 시간과 상관없이 새 값으로 덮어씁니다. 짧게 걸면 줄어듭니다.
+    apply ... if not active
+             이미 걸려 있으면 아무것도 하지 않습니다.
+
+    apply status effect "stun" to event-entity for 3 seconds
+    stack status effect "bleed" on event-entity for 2 seconds
+    refresh status effect "frost" on player for 5 seconds
+    apply status effect "mark" to player for 10 seconds if not active
+
+여러 명에게 한 번에 걸 수도 있습니다.
+
+    apply status effect "frost" to all players for 5 seconds
+    apply status effect "frost" to players with ability class "menhera" for 5 seconds
+
+상태이상 이벤트
+    on status effect apply:              모든 상태이상
+    on status effect apply "stun":       그 상태이상만
+    on status effect expire "stun":      시간이 다 되어 저절로 풀렸을 때
+
+    이벤트 안에서 쓸 수 있는 값
+        player                  상태이상을 받는 플레이어
+        event-string            상태이상 id
+        status effect duration  걸릴 시간(초). apply 안에서는 바꿀 수도 있습니다
+
+    cancel event 를 하면 상태이상이 걸리지 않습니다. 면역 능력을 이걸로 만듭니다.
+
+        on status effect apply "stun":
+            if player has ability class "menhera":
+                cancel event
+
+        on status effect apply:
+            if player has status effect "resist":
+                set status effect duration to status effect duration / 2
+
+주의할 점
+    - 남은 시간은 게임이 진행 중일 때만 깎입니다. 게임이 끝나면 전부 지워집니다.
+    - remove status effect 로 직접 지운 경우에는 expire 이벤트가 발생하지 않습니다.
+      시간이 다 된 것과 누가 걷어낸 것을 구분할 수 있어야 하기 때문입니다.
+    - 상태이상 자체는 이름표일 뿐입니다. "기절이면 못 움직인다" 같은 실제 효과는
+      스크립트에서 직접 만들어야 합니다.
+
+
 능력 동작 작성
 --------------
     on ability use "능력id":
@@ -145,6 +211,12 @@ Skript가 아는 이름이면 됩니다. 애드온이 추가한 이벤트도 됩
     item of ability %string%             → "blaze_rod" (없으면 비어 있음)
     max cooldown of ability %string%     → 정의에 적힌 쿨타임 초 (남은 쿨타임 아님)
 
+표현식 — 상태이상
+    remaining time of status effect %string% for %player%   → 2.4 (초)
+    status effects of %player%           → 걸려 있는 상태이상 id 목록
+    %player%'s status effects            → 위와 같음
+    status effect duration               → apply 이벤트 안에서만. set 가능
+
 조건
     %player% has ability class %string%
     %player% doesn't have ability class %string%
@@ -156,6 +228,8 @@ Skript가 아는 이름이면 됩니다. 애드온이 추가한 이벤트도 됩
     %player% is not on cooldown for ability %string%
     ability %string% is disabled for %player%
     ability %string% is enabled for %player%
+    %player% has status effect %string%
+    %player% doesn't have status effect %string%
 
 효과
     set ability class of %player% to %string%
@@ -169,6 +243,15 @@ Skript가 아는 이름이면 됩니다. 애드온이 추가한 이벤트도 됩
     enable all abilities for %player%
     force %player% to use ability %string% [on %entity%]
     trigger ability %string% for %player% [on %entity%]
+
+효과 — 상태이상
+    apply status effect %string% to %player% for %number% seconds
+    apply status effect %string% to %player% for %number% seconds if not active
+    stack status effect %string% on %player% for %number% seconds
+    refresh status effect %string% on %player% for %number% seconds
+    remove status effect %string% from %player%
+    clear all status effects from %player%
+    set the name of status effect %string% to %string%
 
 
 능력 잠시 끄기

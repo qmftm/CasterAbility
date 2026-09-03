@@ -9,6 +9,9 @@ import me.qmftm.casterability.skript.effect.*
 import me.qmftm.casterability.skript.expression.*
 import ch.njol.skript.registrations.EventValues
 import me.qmftm.casterability.event.AbilityUseEvent
+import me.qmftm.casterability.event.StatusEffectApplyEvent
+import me.qmftm.casterability.event.StatusEffectExpireEvent
+import me.qmftm.casterability.skript.condition.CondHasStatusEffect
 import me.qmftm.casterability.skript.section.SecAbility
 import me.qmftm.casterability.skript.section.SecAbilityClass
 import org.bukkit.entity.Entity
@@ -27,6 +30,8 @@ object SkriptRegistry {
 
         // ── 이벤트 ───────────────────────────────────────
         EvtAbilityUse.register()
+        EvtStatusEffectApply.register()
+        EvtStatusEffectExpire.register()
 
         // ── Effect (능력 조작) ────────────────────────────
         EffSetAbilityClass.register()
@@ -36,6 +41,11 @@ object SkriptRegistry {
         EffResetAllCooldowns.register()
         EffToggleAbility.register()
         EffTriggerAbility.register()
+
+        // ── Effect (상태이상) ─────────────────────────────
+        EffApplyStatusEffect.register()
+        EffRemoveStatusEffect.register()
+        EffStatusEffectName.register()
 
         // ── Expression (값 읽기) ──────────────────────────
         ExprAbilityClassId.register()
@@ -57,12 +67,18 @@ object SkriptRegistry {
         ExprAbilityItem.register()
         ExprAbilityMaxCooldown.register()
 
+        // 상태이상
+        ExprStatusEffectTime.register()
+        ExprStatusEffectsOf.register()
+        ExprStatusEffectDuration.register()
+
         // ── Condition (조건) ──────────────────────────────
         CondHasAbilityClass.register()
         CondOnCooldown.register()
         CondHasAbility.register()
         CondHasAbilityId.register()
         CondAbilityDisabled.register()
+        CondHasStatusEffect.register()
 
         registerEventValues()
     }
@@ -88,6 +104,20 @@ object SkriptRegistry {
         EventValues.registerEventValue(
             AbilityUseEvent::class.java, String::class.java,
             Converter { it.abilityId }
+        )
+
+        // 상태이상 이벤트: event-string → 상태이상 id, event-number → 걸릴 시간(초)
+        EventValues.registerEventValue(
+            StatusEffectApplyEvent::class.java, String::class.java,
+            Converter { it.effectId }
+        )
+        EventValues.registerEventValue(
+            StatusEffectApplyEvent::class.java, Number::class.java,
+            Converter { it.duration }
+        )
+        EventValues.registerEventValue(
+            StatusEffectExpireEvent::class.java, String::class.java,
+            Converter { it.effectId }
         )
     }
 }

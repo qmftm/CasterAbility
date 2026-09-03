@@ -1,5 +1,8 @@
 package me.qmftm.casterability.game
 
+import me.qmftm.casterability.event.StatusEffectApplyEvent
+import me.qmftm.casterability.event.StatusEffectExpireEvent
+import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import java.util.UUID
 
@@ -52,9 +55,9 @@ object PlayerStateManager {
         playerVariables[player.uniqueId]?.remove(key)
     }
 
-    // ── 이펙트 ────────────────────────────────────────────
+    // ── 상태이상 ──────────────────────────────────────────
 
-    /** 액션바에 쓸 이펙트 이름을 등록한다. */
+    /** 액션바에 쓸 상태이상 이름을 등록한다. 등록하지 않으면 id를 그대로 쓴다. */
     fun registerEffect(id: String, displayName: String) {
         effectNames[id] = displayName
     }
@@ -62,14 +65,37 @@ object PlayerStateManager {
     fun effectDisplayName(id: String): String = effectNames[id] ?: id
 
     /**
-     * @param mode "add" = 남은 시간에 더함, "set" = 기존보다 길 때만 갱신
+     * 상태이상을 건다.
+     *
+     * 거는 순간 [StatusEffectApplyEvent]가 발생하므로, 스크립트가 취소하거나
+     * 시간을 바꿀 수 있다. 취소되면 아무것도 걸리지 않는다.
+     *
+     * @return 실제로 걸렸으면 true
      */
-    fun addEffect(player: Player, effectId: String, durationSeconds: Double, mode: String = "add") {
+    fun applyEffect(
+        player: Player,
+        effectId: String,
+        durationSeconds: Double,
+        mode: StatusEffectMode = StatusEffectMode.LONGEST,
+    ): Boolean {
+        val current = getEffect(player, effectId)
+        if (mode == StatusEffectMode.IGNORE && current > 0.0) return false
+
+        val event = StatusEffectApplyEvent(player, effectId, durationSeconds, mode)
+        Bukkit.getPluginManager().callEvent(event)
+        if (event.isCancelled) return false
+
+        val duration = event.duration
+        if (duration <= 0.0) return false
+
         val map = effects.getOrPut(player.uniqueId) { mutableMapOf() }
-        when (mode) {
-            "set" -> if ((map[effectId] ?: 0.0) < durationSeconds) map[effectId] = durationSeconds
-            else  -> map[effectId] = (map[effectId] ?: 0.0) + durationSeconds
+        map[effectId] = when (mode) {
+            StatusEffectMode.STACK   -> current + duration
+            StatusEffectMode.REPLACE -> duration
+            // LONGEST / IGNORE — IGNORE는 위에서 이미 걸러졌으므로 여기선 안 걸린 상태다
+            else -> maxOf(current, duration)
         }
+        return true
     }
 
     fun getEffect(player: Player, effectId: String): Double =
@@ -82,6 +108,11 @@ object PlayerStateManager {
 
     fun deleteEffect(player: Player, effectId: String) {
         effects[player.uniqueId]?.remove(effectId)
+    }
+
+    /** 이 플레이어의 상태이상을 전부 없앤다. 능력 변수나 커스텀 UI는 건드리지 않는다. */
+    fun clearEffects(player: Player) {
+        effects.remove(player.uniqueId)
     }
 
     // ── 커스텀 UI ─────────────────────────────────────────
@@ -115,6 +146,10 @@ object PlayerStateManager {
     // ── 틱 처리 (GameScheduler에서 2틱마다 호출) ───────────
 
     fun tickEffects() {
+        // 시간이 다 된 것들. 순회 중에 이벤트를 부르면 스크립트가 effects를 건드릴 수
+        // 있으므로, 다 돌고 나서 한꺼번에 알린다.
+        val expired = mutableListOf<Pair<UUID, String>>()
+
         val playerIter = effects.entries.iterator()
         while (playerIter.hasNext()) {
             val entry = playerIter.next()
@@ -123,9 +158,19 @@ object PlayerStateManager {
             while (iter.hasNext()) {
                 val e = iter.next()
                 val next = e.value - 0.1
-                if (next <= 0.0) iter.remove() else e.setValue(next)
+                if (next <= 0.0) {
+                    iter.remove()
+                    expired += entry.key to e.key
+                } else {
+                    e.setValue(next)
+                }
             }
             if (map.isEmpty()) playerIter.remove()
+        }
+
+        for ((uuid, effectId) in expired) {
+            val player = Bukkit.getPlayer(uuid) ?: continue
+            Bukkit.getPluginManager().callEvent(StatusEffectExpireEvent(player, effectId))
         }
     }
 }

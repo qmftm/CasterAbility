@@ -60,6 +60,24 @@ on ability use "reflect":
     damage event-entity by 2
 ```
 
+기절·출혈 같은 상태이상은 플러그인이 남은 시간을 세고 액션바에 그려줍니다.
+여러 능력이 같은 상태이상을 공유할 수 있고, 면역도 만들 수 있습니다.
+
+```
+on load:
+    set the name of status effect "stun" to "&c기절"
+
+on ability use "yandere_jealousy":
+    apply status effect "stun" to event-entity for 3 seconds
+
+# 면역
+on status effect apply "stun":
+    if player has ability class "menhera":
+        cancel event
+```
+
+액션바 표시: `§c기절: 2.4`
+
 스크립트만으로는 만들기 번거로운 것들도 구문으로 제공합니다.
 
 ```
