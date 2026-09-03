@@ -1,0 +1,128 @@
+# ─────────────────────────────────────────────────────────
+#  얀데레 (A등급) — CasterAbility 예제
+#
+#  패시브 "처음 본 순간"
+#    처음 때린 상대를 집착 대상으로 지정합니다.
+#    집착 대상과 가까이 있으면 주는 피해가 늘고 받는 피해가 줄어듭니다.
+#    집착 대상이 죽으면 지정이 풀려 다시 지정할 수 있습니다.
+#
+#  철괴 우클릭 "질투" (쿨타임 45초)
+#    집착 대상이 마지막으로 때린 상대가 내가 아니면,
+#    그 상대와 집착 대상 둘 다에게 마지막 피해의 5배를 줍니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    distance: 20
+    percent: 25
+    multiple: 5
+
+
+on load:
+    ability class "yandere":
+        name: "얀데레"
+        tier: 2
+
+    ability "yandere_obsession":
+        class: "yandere"
+        trigger: on_hit
+
+    ability "yandere_devotion":
+        class: "yandere"
+        trigger: on_damaged
+
+    ability "yandere_jealousy":
+        class: "yandere"
+        trigger: right_click
+        item: blaze_rod
+        cooldown: 45
+
+
+# ── 누가 누구를 얼마로 때렸는지 기록 ──────────────────────
+# 질투 스킬이 "집착 대상의 마지막 공격"을 참조하기 때문에 필요합니다.
+
+on damage:
+    attacker is a player
+    victim is a player
+    set {yandere.lasthit::%attacker's uuid%::target} to victim
+    set {yandere.lasthit::%attacker's uuid%::damage} to damage
+
+
+# ── 때릴 때: 집착 대상 지정 / 피해 증가 ───────────────────
+
+on ability use "yandere_obsession":
+    set {_victim} to event-entity
+    if {_victim} is not a player:
+        stop
+
+    # 아직 집착 대상이 없으면 이번에 때린 상대로 지정
+    if {yandere.obsession::%player's uuid%} is not set:
+        set {yandere.obsession::%player's uuid%} to {_victim}
+        send "&d%{_victim}%님을 집착 대상으로 지정하셨습니다." to player
+        stop
+
+    # 집착 대상이 아니면 보너스 없음
+    if {yandere.obsession::%player's uuid%} is not {_victim}:
+        stop
+    if distance between player and {_victim} > {@distance}:
+        stop
+
+    set ability damage to ability damage * (1 + {@percent} / 100)
+
+
+# ── 맞을 때: 집착 대상에게 맞으면 피해 감소 ───────────────
+
+on ability use "yandere_devotion":
+    set {_attacker} to event-entity
+    if {_attacker} is not a player:
+        stop
+    if {yandere.obsession::%player's uuid%} is not {_attacker}:
+        stop
+    if distance between player and {_attacker} > {@distance}:
+        stop
+
+    set ability damage to ability damage * (1 - {@percent} / 100)
+
+
+# ── 철괴 우클릭: 질투 ─────────────────────────────────────
+# cancel event 를 하면 쿨타임이 걸리지 않습니다.
+
+on ability use "yandere_jealousy":
+    set {_obsession} to {yandere.obsession::%player's uuid%}
+
+    if {_obsession} is not set:
+        send "&c집착 대상이 없습니다." to player
+        cancel event
+        stop
+    if {_obsession} is not online:
+        send "&c집착 대상이 접속 중이 아닙니다." to player
+        cancel event
+        stop
+
+    set {_target} to {yandere.lasthit::%{_obsession}'s uuid%::target}
+    if {_target} is not set:
+        send "&c집착 대상이 아직 아무도 공격하지 않았습니다." to player
+        cancel event
+        stop
+    if {_target} is player:
+        send "&c집착 대상이 마지막으로 공격한 대상이 자신입니다." to player
+        cancel event
+        stop
+    if {_target} is not online:
+        send "&c그 대상이 접속 중이 아닙니다." to player
+        cancel event
+        stop
+
+    set {_damage} to {yandere.lasthit::%{_obsession}'s uuid%::damage} * {@multiple}
+    damage {_target} by {_damage}
+    damage {_obsession} by {_damage}
+    send "&d질투! &f%{_target}%&f와 &c%{_obsession}%&f에게 &c%{_damage}%&f의 피해를 주었습니다." to player
+
+
+# ── 집착 대상이 죽으면 지정 해제 ──────────────────────────
+
+on death of player:
+    delete {yandere.lasthit::%victim's uuid%::*}
+    loop all players:
+        if {yandere.obsession::%loop-player's uuid%} is victim:
+            delete {yandere.obsession::%loop-player's uuid%}
+            send "&7집착 대상이 사망하여 지정이 해제되었습니다." to loop-player

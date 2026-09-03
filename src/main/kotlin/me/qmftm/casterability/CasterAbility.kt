@@ -1,9 +1,8 @@
 package me.qmftm.casterability
 
 import ch.njol.skript.Skript
-import me.qmftm.casterability.ability.examples.MenheraAbility
-import me.qmftm.casterability.ability.examples.YandereAbility
 import me.qmftm.casterability.command.Commands
+import me.qmftm.casterability.util.ExampleScripts
 import me.qmftm.casterability.config.GameConfig
 import me.qmftm.casterability.game.GameManager
 import me.qmftm.casterability.gui.ConfigGui
@@ -49,11 +48,8 @@ class CasterAbility : JavaPlugin() {
         pm.registerEvents(GuiListener(this), this)
         pm.registerEvents(AbilityDispatcher(gameManager), this)
 
-        // ── 예제 능력 (필요 없으면 이 블록만 지우면 됩니다) ──
-        YandereAbility.register()
-        MenheraAbility.register()
-        pm.registerEvents(YandereAbility(this), this)
-        pm.registerEvents(MenheraAbility(this), this)
+        // ── 예제 스크립트 생성 ────────────────────────────
+        ExampleScripts.install(this)
 
         logger.info("CasterAbility v${description.version} 활성화됨")
         Bukkit.getOnlinePlayers()

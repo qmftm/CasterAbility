@@ -1,0 +1,78 @@
+# ─────────────────────────────────────────────────────────
+#  멘헤라 (B등급) — CasterAbility 예제
+#
+#  패시브 "사랑해줘"
+#    자연 회복을 하지 않습니다.
+#    남에게 맞으면 (받은 피해 × 0.5)초 동안 재생 2를 얻습니다.
+#
+#  철괴 우클릭 "자신감 해로" (쿨타임 50초)
+#    최대 체력의 25%만큼 자해한 뒤 20초간 신속 · 힘 · 저항을 얻습니다.
+#    남은 체력이 최대 체력의 25% 이하면 쓸 수 없습니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    love_multiple: 0.5
+    love_level: 2
+    selfharm_percent: 25
+    selfharm_seconds: 20
+
+
+on load:
+    ability class "menhera":
+        name: "멘헤라"
+        tier: 3
+
+    ability "menhera_love":
+        class: "menhera"
+        trigger: on_damaged
+
+    ability "menhera_selfharm":
+        class: "menhera"
+        trigger: right_click
+        item: blaze_rod
+        cooldown: 50
+
+
+# ── 패시브: 자연 회복 차단 ────────────────────────────────
+# satiated = 배부름 회복, regen = 평화로움 난이도 자동 회복
+# 포션이나 능력에 의한 회복(magic regen)은 막지 않습니다.
+
+on heal of player:
+    heal reason is satiated or regen
+    player has ability class "menhera"
+    cancel event
+
+
+# ── 패시브: 맞으면 재생 ───────────────────────────────────
+
+on ability use "menhera_love":
+    set {_attacker} to event-entity
+    if {_attacker} is not a player:
+        stop
+    if {_attacker} is player:
+        stop
+
+    set {_seconds} to ability damage * {@love_multiple}
+    if {_seconds} <= 0:
+        stop
+
+    apply regeneration {@love_level} to player for {_seconds} seconds
+
+
+# ── 철괴 우클릭: 자신감 해로 ──────────────────────────────
+# cancel event 를 하면 쿨타임이 걸리지 않습니다.
+
+on ability use "menhera_selfharm":
+    set {_max} to player's max health
+    set {_cost} to {_max} * {@selfharm_percent} / 100
+
+    if player's health <= {_cost}:
+        send "&c남은 체력이 {@selfharm_percent}%% 이하라 사용할 수 없습니다." to player
+        cancel event
+        stop
+
+    damage player by {_cost}
+    apply speed 1 to player for {@selfharm_seconds} seconds
+    apply strength 1 to player for {@selfharm_seconds} seconds
+    apply resistance 1 to player for {@selfharm_seconds} seconds
+    send "&e자신감 해로! &f{@selfharm_seconds}초간 강화됩니다." to player
