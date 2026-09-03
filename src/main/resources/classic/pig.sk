@@ -1,0 +1,149 @@
+# ─────────────────────────────────────────────────────────
+#  돼지 (B등급) — CasterAbility 기본 능력
+#
+#  패시브 "폭식"
+#    음식을 먹을 때마다 몸무게가 오릅니다. 최대 100.
+#    몸무게만큼 공격력이 오르고 이동속도가 떨어집니다.
+#
+#  철괴 우클릭 "폭주" (쿨타임 40초)
+#    10초간 몸무게 +10, 공격력 +45%.
+#    끝나면 몸무게가 0이 되고 쿨타임 동안 다시 찌우지 못합니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    weight_max: 100
+    weight_per_food: 5           # 음식 하나당 오르는 몸무게
+    damage_per_weight: 0.8       # 몸무게 1당 공격력 +%
+    slow_divisor: 5              # 이동속도 감소 % = 몸무게 / 이 값
+    base_walk_speed: 0.2         # 마인크래프트 기본 걷기 속도
+
+    rampage_seconds: 10
+    rampage_weight: 10
+    rampage_damage: 45           # 폭주 중 추가 공격력 %
+    cooltime: 40
+
+
+on load:
+    set the name of status effect "pig_rampage" to "&c폭주"
+
+    ability class "pig":
+        name: "돼지"
+        tier: 3
+        description:
+            "&d[&7패시브 &f- &d폭식]"
+            "&f음식을 먹을 때마다 &6몸무게 게이지&f가 상승합니다."
+            "&6몸무게 게이지&f는 최대 &c{@weight_max}&f까지 증가하며,"
+            "&f대미지가 (&6몸무게&f * &c{@damage_per_weight}&f) % 증가하고"
+            "&f이동속도가 (&6몸무게&f / &c{@slow_divisor}&f) % 감소합니다."
+            ""
+            "&d[&7철괴 우클릭 &f- &d폭주] &7(쿨타임 {@cooltime}초)"
+            "&c{@rampage_seconds}초&f간 자신의 &6몸무게&f가 &c{@rampage_weight}&f 증가하고"
+            "&f공격력이 추가로 &c{@rampage_damage}%&f 증가합니다."
+            "&f폭주로 증가한 &6몸무게&f에는 최대 제한이 없습니다."
+            ""
+            "&f폭주가 종료되면 &6몸무게 게이지&f가 &c0&f이 되고"
+            "&f쿨타임 동안 &6몸무게 게이지&f를 증가시킬 수 없습니다."
+
+    ability "pig_gluttony":
+        class: "pig"
+        name: "폭식"
+        trigger: on_hit
+
+    ability "pig_rampage":
+        class: "pig"
+        name: "폭주"
+        trigger: right_click
+        item: iron ingot
+        cooldown: 40
+
+
+# ── 지금 몸무게 (폭주 보정 포함) ──────────────────────────
+# 저장된 값은 100을 넘지 않습니다. 폭주 보정은 저장하지 않고
+# 여기서만 얹기 때문에 "폭주로 증가한 몸무게에는 제한이 없다"가 됩니다.
+
+function pigWeight(p: player) :: number:
+    set {_w} to {pig.weight::%{_p}'s uuid%}
+    if {_w} is not set:
+        set {_w} to 0
+    if {_p} has status effect "pig_rampage":
+        add {@rampage_weight} to {_w}
+    return {_w}
+
+
+# ── 액션바 표시와 이동속도를 몸무게에 맞춘다 ──────────────
+
+function pigUpdate(p: player):
+    set {_w} to pigWeight({_p})
+
+    set ability info "weight" of {_p} to "&6몸무게: &f%{_w}%"
+
+    # 감소 % = 몸무게 / slow_divisor → 비율로는 몸무게 / (slow_divisor * 100)
+    set {_speed} to {@base_walk_speed} * (1 - {_w} / ({@slow_divisor} * 100))
+    if {_speed} < 0:
+        set {_speed} to 0
+    set {_p}'s walk speed to {_speed}
+
+
+# ── 음식을 먹으면 몸무게 상승 ─────────────────────────────
+
+on consume:
+    player has ability class "pig"
+
+    # 폭주 쿨타임이 도는 동안에는 찌우지 못한다
+    if player is on cooldown for ability "pig_rampage":
+        stop
+
+    set {_w} to {pig.weight::%player's uuid%}
+    if {_w} is not set:
+        set {_w} to 0
+    if {_w} >= {@weight_max}:
+        stop
+
+    add {@weight_per_food} to {_w}
+    if {_w} > {@weight_max}:
+        set {_w} to {@weight_max}
+
+    set {pig.weight::%player's uuid%} to {_w}
+    pigUpdate(player)
+
+
+# ── 때릴 때: 몸무게와 폭주만큼 공격력 증가 ────────────────
+
+on ability use "pig_gluttony":
+    set {_w} to pigWeight(player)
+
+    if {_w} > 0:
+        set ability damage to ability damage * (1 + {_w} * {@damage_per_weight} / 100)
+
+    if player has status effect "pig_rampage":
+        set ability damage to ability damage * (1 + {@rampage_damage} / 100)
+
+
+# ── 철괴 우클릭: 폭주 ─────────────────────────────────────
+
+on ability use "pig_rampage":
+    apply status effect "pig_rampage" to player for {@rampage_seconds} seconds
+    pigUpdate(player)
+    send "&c폭주! &f{@rampage_seconds}초간 몸무게가 {@rampage_weight} 늘고 공격력이 {@rampage_damage}%% 증가합니다." to player
+
+
+# ── 폭주가 끝나면 몸무게 초기화 ───────────────────────────
+
+on status effect expire "pig_rampage":
+    set {pig.weight::%player's uuid%} to 0
+    pigUpdate(player)
+    send "&7폭주가 끝나 몸무게가 0이 되었습니다." to player
+
+
+# ── 걷기 속도 되돌리기 ────────────────────────────────────
+# 몸무게는 걷기 속도를 직접 건드리므로, 능력이 끝나는 자리에서
+# 기본값으로 돌려놓지 않으면 그대로 남습니다.
+
+on respawn:
+    player has ability class "pig"
+    set player's walk speed to {@base_walk_speed}
+    pigUpdate(player)
+
+on quit:
+    player has ability class "pig"
+    set player's walk speed to {@base_walk_speed}

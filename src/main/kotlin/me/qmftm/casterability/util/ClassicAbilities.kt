@@ -30,6 +30,7 @@ object ClassicAbilities {
     private val ABILITIES = listOf(
         "yandere.sk",
         "menhera.sk",
+        "pig.sk",
     )
 
     private const val SYNTAX_DOC = "SYNTAX.txt"
