@@ -18,14 +18,11 @@ import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import org.bukkit.scheduler.BukkitTask
 import java.util.UUID
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.random.Random
 
 class GameManager(private val plugin: CasterAbility) {
 
     val bossBar = BossBarManager(plugin)
+    private val worldBorder = WorldBorderController(plugin, bossBar)
 
     var isRunning = false
         private set
@@ -127,28 +124,19 @@ class GameManager(private val plugin: CasterAbility) {
             return
         }
 
-        spawnX = world.spawnLocation.x
-        spawnZ = world.spawnLocation.z
-
-        if (cfg.worldborderEnable) {
-            val wb = world.worldBorder
-            wb.setCenter(spawnX, spawnZ)
-            wb.size = cfg.worldborderMaxRadius * 2.0
-            wb.damageAmount = 0.5
-            wb.damageBuffer  = 0.0
-            wb.warningDistance = 15
-        }
+        // 바다·강·사막을 피해 중심을 고른다 (ChzzkAbility World.sk)
+        val center = SpawnLocator.findWorldCenter(world, sampleRadius = cfg.worldborderMaxRadius)
+        spawnX = center.x
+        spawnZ = center.z
 
         for (uid in gamePlayers) {
             val p = Bukkit.getPlayer(uid) ?: continue
             val loc = if (cfg.randomSpawn) {
-                val angle = Random.nextDouble() * 2 * PI
-                val dist  = Random.nextDouble() * cfg.randomRadius
-                val x = spawnX + dist * cos(angle)
-                val z = spawnZ + dist * sin(angle)
-                world.getHighestBlockAt(x.toInt(), z.toInt()).location.add(0.5, 1.0, 0.5)
-            } else world.spawnLocation
+                SpawnLocator.findSpawn(world, spawnX, spawnZ, cfg.randomRadius)
+            } else center
 
+            // 텔레포트 전에 청크를 불러온다 (ChzzkAbility teleport.sk)
+            world.getChunkAt(loc)
             p.teleport(loc)
             p.getAttribute(Attribute.MAX_HEALTH)?.baseValue = cfg.basicHealth.toDouble()
             p.health = cfg.basicHealth.toDouble()
@@ -230,33 +218,18 @@ class GameManager(private val plugin: CasterAbility) {
     // ── 월드보더 수축 ─────────────────────────────────────
 
     private fun startWorldBorderShrink() {
-        val cfg   = plugin.gameConfig
-        if (!cfg.worldborderEnable) return
         val world = gameWorld ?: return
-        val wb    = world.worldBorder
-        val count = cfg.worldborderShrinkCount
-
-        fun shrinkStep(step: Int) {
-            if (!isRunning || step > count) return
-            timedAction(
-                "ca.border.wait", "&c월드보더 수축까지", cfg.worldborderShrinkSecond,
-                BossBar.Color.WHITE, cfg.worldborderShowBossbar, colorChange = false, broadcastCountdown = false
-            ) {
-                val current = wb.size / 2.0
-                val target  = maxOf(cfg.worldborderMinRadius.toDouble(),
-                    current - (current - cfg.worldborderMinRadius) / (count - step + 1))
-                if (cfg.worldborderShrinkRandomCenter) {
-                    val angle = Random.nextDouble() * 2 * PI
-                    val dist  = Random.nextDouble() * current * 0.5
-                    spawnX += dist * cos(angle)
-                    spawnZ += dist * sin(angle)
-                    wb.setCenter(spawnX, spawnZ)
-                }
-                wb.setSize(target * 2, cfg.worldborderShrinkSecond.toLong())
-                shrinkStep(step + 1)
-            }
+        worldBorder.start(
+            world = world,
+            startX = spawnX,
+            startZ = spawnZ,
+            cfg = plugin.gameConfig,
+            isRunning = { isRunning && phase == GamePhase.IN_GAME },
+        ) { newX, newZ ->
+            // 랜덤 스폰 기준점을 새 중앙으로 옮긴다
+            spawnX = newX
+            spawnZ = newZ
         }
-        shrinkStep(1)
     }
 
     // ── 게임 종료 ─────────────────────────────────────────
@@ -273,6 +246,7 @@ class GameManager(private val plugin: CasterAbility) {
         passiveTasks.clear()
         // 쿨타임/이펙트/UI 태스크 취소 — 액션바를 지우기 전에 멈춰야 다시 그려지지 않는다
         GameScheduler.stop()
+        worldBorder.stop()
 
         gamePlayers.mapNotNull { Bukkit.getPlayer(it) }.forEach { p ->
             p.closeInventory()

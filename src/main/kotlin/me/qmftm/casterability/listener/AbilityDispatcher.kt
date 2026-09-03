@@ -51,9 +51,9 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
                     p.sendMessage("§c[${def.id}] 쿨타임 ${remain}초 남음")
                     return@forEach
                 }
-                dispatch(p, def.id, trigger)
-                // 쿨타임 자동 적용
-                if (def.cooldownSeconds > 0) {
+                val used = dispatch(p, def.id, trigger)
+                // 스크립트가 cancel event 로 거부하면 쿨타임을 걸지 않는다
+                if (used != null && !used.isCancelled && def.cooldownSeconds > 0) {
                     AbilityRegistry.setCooldown(p, def.id, def.cooldownSeconds * 20)
                 }
             }
@@ -146,8 +146,8 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
         abilityId: String,
         trigger: AbilityTrigger,
         target: org.bukkit.entity.Entity? = null,
-    ) {
-        val def = AbilityRegistry.getAbility(abilityId) ?: return
+    ): AbilityUseEvent? {
+        val def = AbilityRegistry.getAbility(abilityId) ?: return null
         val useEvent = AbilityUseEvent(
             player  = player,
             ability = def,
@@ -155,6 +155,7 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
             target  = target,
         )
         Bukkit.getPluginManager().callEvent(useEvent)
+        return useEvent
     }
 
     private fun isInGame(p: Player): Boolean =

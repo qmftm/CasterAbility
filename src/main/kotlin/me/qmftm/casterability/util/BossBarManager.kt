@@ -30,6 +30,12 @@ class BossBarManager(private val plugin: CasterAbility) {
         bars.keys.toList().forEach { delete(it) }
     }
 
+    /** 중간에 접속한 플레이어에게도 보이도록 다시 표시한다. */
+    fun refresh(id: String) {
+        val bar = bars[id] ?: return
+        Bukkit.getOnlinePlayers().forEach { it.showBossBar(bar) }
+    }
+
     fun setName(id: String, name: String) {
         bars[id]?.name(LegacyComponentSerializer.legacyAmpersand().deserialize(name))
     }
