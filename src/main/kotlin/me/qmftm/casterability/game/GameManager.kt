@@ -202,6 +202,7 @@ class GameManager(private val plugin: CasterAbility) {
                     if (!isRunning || phase != GamePhase.IN_GAME) return@Runnable
                     gamePlayers.mapNotNull { Bukkit.getPlayer(it) }
                         .filter { AbilityRegistry.getPlayerClassId(it) == def.classId }
+                        .filter { !AbilityRegistry.isAbilityDisabled(it, def.id) }
                         .forEach { p ->
                             if (!AbilityRegistry.isOnCooldown(p, def.id)) {
                                 val event = AbilityUseEvent(p, def, AbilityTrigger.PASSIVE)

@@ -45,6 +45,26 @@ on ability use "yandere_jealousy":
     send "&d질투!" to player
 ```
 
+스크립트만으로는 만들기 번거로운 것들도 구문으로 제공합니다.
+
+```
+# 등록된 능력 훑어보기
+loop all ability classes:
+    send "%loop-value% — %name of ability class loop-value%"
+
+# 특정 클래스를 가진 사람 전부에게
+loop players with ability class "yandere":
+    send "&d들켰다" to loop-value
+
+# 능력을 잠깐 봉인
+disable ability "yandere_jealousy" for event-entity
+wait 10 seconds
+enable ability "yandere_jealousy" for event-entity
+
+# 다른 능력을 직접 발동
+force player to use ability "yandere_jealousy" on event-entity
+```
+
 문법 전체는 `plugins/CasterAbility/SYNTAX.txt` 에 정리되어 있습니다.
 
 > 능력을 **지우거나 이름을 바꾼** 뒤에는 `/ca reload` → `/sk reload all` 순서로 하세요.

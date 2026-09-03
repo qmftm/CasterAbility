@@ -77,20 +77,39 @@ trigger 종류
 
 쓸 수 있는 구문
 ---------------
-표현식
+표현식 — 플레이어 기준
     ability class of %player%            → "yandere"
     ability class name of %player%       → "얀데레"
     ability class tier of %player%       → 2
+    tier display of %player%             → "§c§lA" (색이 들어간 등급 표시)
+    abilities of %player%                → 그 플레이어가 가진 능력 id 목록
+    %player%'s abilities                 → 위와 같음
     cooldown of %player% for ability %string%   → 남은 초
     ability damage                       → 피해량 (set 가능)
+
+표현식 — 등록된 정의 기준 (플레이어와 무관)
+    name of ability class %string%       → "얀데레"
+    tier of ability class %string%       → 2
+    tier display of ability class %string%      → "§c§lA"
+    abilities of ability class %string%  → 그 클래스에 속한 능력 id 목록
+    all ability classes                  → 등록된 모든 클래스 id
+    all abilities                        → 등록된 모든 능력 id
+    players with ability class %string%  → 그 클래스를 가진 접속 중인 플레이어들
+    trigger of ability %string%          → "right_click"
+    item of ability %string%             → "blaze_rod" (없으면 비어 있음)
+    max cooldown of ability %string%     → 정의에 적힌 쿨타임 초 (남은 쿨타임 아님)
 
 조건
     %player% has ability class %string%
     %player% doesn't have ability class %string%
+    %player% has ability %string%
+    %player% doesn't have ability %string%
     %player% has an ability
     %player% has no ability
     %player% is on cooldown for ability %string%
     %player% is not on cooldown for ability %string%
+    ability %string% is disabled for %player%
+    ability %string% is enabled for %player%
 
 효과
     set ability class of %player% to %string%
@@ -98,6 +117,37 @@ trigger 종류
     remove ability from %player%
     set cooldown of %player% for ability %string% to %number%
     reset cooldown of %player% for ability %string%
+    reset all cooldowns of %player%
+    disable ability %string% for %player%
+    enable ability %string% for %player%
+    enable all abilities for %player%
+    force %player% to use ability %string% [on %entity%]
+    trigger ability %string% for %player% [on %entity%]
+
+
+능력 잠시 끄기
+--------------
+disable 한 능력은 그 플레이어에게만 발동하지 않습니다.
+우클릭이든 passive든 on_hit이든 전부 막힙니다. 정의 자체는 그대로 남습니다.
+
+    on ability use "silence":
+        disable ability "yandere_jealousy" for event-entity
+        wait 10 seconds
+        enable ability "yandere_jealousy" for event-entity
+
+능력을 잃거나 클래스가 바뀌면 꺼둔 목록도 같이 지워집니다.
+
+
+능력 직접 발동시키기
+--------------------
+force ... to use 는 on ability use 이벤트를 그냥 발생시킵니다.
+쿨타임을 확인하지도 않고 새로 걸지도 않습니다. 필요하면 직접 거세요.
+
+    on ability use "combo":
+        force player to use ability "yandere_jealousy" on event-entity
+        set cooldown of player for ability "yandere_jealousy" to 10
+
+on 뒤에 넣은 엔티티는 이벤트 안에서 event-entity 로 읽힙니다.
 
 
 주의

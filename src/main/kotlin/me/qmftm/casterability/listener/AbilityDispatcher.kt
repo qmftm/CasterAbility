@@ -36,11 +36,8 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
             else -> return
         }
 
-        val classId = AbilityRegistry.getPlayerClassId(p) ?: return
-
         // 플레이어의 클래스에 속한 ability 중 트리거/아이템이 맞는 것을 발동
-        AbilityRegistry.abilitiesOfClass(classId)
-            .filter { it.trigger == trigger }
+        AbilityRegistry.triggerableAbilities(p, trigger)
             .filter { def ->
                 // item이 지정된 경우 손에 들고 있어야 함
                 def.item == null || def.item == p.inventory.itemInMainHand.type
@@ -67,9 +64,7 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
         val victim   = event.entity   as? Player ?: return
         if (!isInGame(attacker)) return
 
-        val classId = AbilityRegistry.getPlayerClassId(attacker) ?: return
-        AbilityRegistry.abilitiesOfClass(classId)
-            .filter { it.trigger == AbilityTrigger.ON_HIT }
+        AbilityRegistry.triggerableAbilities(attacker, AbilityTrigger.ON_HIT)
             .forEach { def ->
                 val useEvent = AbilityUseEvent(
                     player  = attacker,
@@ -93,9 +88,7 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
         val attacker = event.damager  as? Player ?: return
         if (!isInGame(victim)) return
 
-        val classId = AbilityRegistry.getPlayerClassId(victim) ?: return
-        AbilityRegistry.abilitiesOfClass(classId)
-            .filter { it.trigger == AbilityTrigger.ON_DAMAGED }
+        AbilityRegistry.triggerableAbilities(victim, AbilityTrigger.ON_DAMAGED)
             .forEach { def ->
                 val useEvent = AbilityUseEvent(
                     player  = victim,
@@ -120,9 +113,7 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
         val killer = event.damager as? Player ?: return
         if (!isInGame(killer)) return
 
-        val classId = AbilityRegistry.getPlayerClassId(killer) ?: return
-        AbilityRegistry.abilitiesOfClass(classId)
-            .filter { it.trigger == AbilityTrigger.ON_KILL }
+        AbilityRegistry.triggerableAbilities(killer, AbilityTrigger.ON_KILL)
             .forEach { def -> dispatch(killer, def.id, AbilityTrigger.ON_KILL, victim) }
     }
 
@@ -133,9 +124,7 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
         val p = event.entity
         if (!isInGame(p)) return
 
-        val classId = AbilityRegistry.getPlayerClassId(p) ?: return
-        AbilityRegistry.abilitiesOfClass(classId)
-            .filter { it.trigger == AbilityTrigger.ON_DEATH }
+        AbilityRegistry.triggerableAbilities(p, AbilityTrigger.ON_DEATH)
             .forEach { def -> dispatch(p, def.id, AbilityTrigger.ON_DEATH) }
     }
 

@@ -1,7 +1,9 @@
 package me.qmftm.casterability.skript
 
+import me.qmftm.casterability.skript.condition.CondAbilityDisabled
 import me.qmftm.casterability.skript.condition.CondHasAbility
 import me.qmftm.casterability.skript.condition.CondHasAbilityClass
+import me.qmftm.casterability.skript.condition.CondHasAbilityId
 import me.qmftm.casterability.skript.condition.CondOnCooldown
 import me.qmftm.casterability.skript.effect.*
 import me.qmftm.casterability.skript.expression.*
@@ -31,6 +33,9 @@ object SkriptRegistry {
         EffRemoveAbility.register()
         EffSetCooldown.register()
         EffResetCooldown.register()
+        EffResetAllCooldowns.register()
+        EffToggleAbility.register()
+        EffTriggerAbility.register()
 
         // ── Expression (값 읽기) ──────────────────────────
         ExprAbilityClassId.register()
@@ -39,10 +44,24 @@ object SkriptRegistry {
         ExprAbilityCooldown.register()
         ExprAbilityDamage.register()
 
+        // 등록된 능력 자체의 정보
+        ExprClassNameOf.register()
+        ExprClassTierOf.register()
+        ExprTierDisplay.register()
+        ExprAllClasses.register()
+        ExprAllAbilities.register()
+        ExprAbilitiesOf.register()
+        ExprPlayersWithClass.register()
+        ExprAbilityTrigger.register()
+        ExprAbilityItem.register()
+        ExprAbilityMaxCooldown.register()
+
         // ── Condition (조건) ──────────────────────────────
         CondHasAbilityClass.register()
         CondOnCooldown.register()
         CondHasAbility.register()
+        CondHasAbilityId.register()
+        CondAbilityDisabled.register()
 
         registerEventValues()
     }

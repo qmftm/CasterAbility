@@ -16,15 +16,16 @@ The shaded JAR is output to `target/`. The default Maven goal is `clean package`
 
 ## Architecture
 
-- `CasterAbility.kt` — main plugin class (`JavaPlugin`). Holds a static `instance` companion. On enable, calls `registerSkriptSyntax()` which registers all custom Skript elements with `Skript.register*()`.
-- `src/main/kotlin/me/qmftm/casterability/skript/` — all custom Skript syntax lives here, organized by type:
-  - `effect/` — Skript effects (extend `ch.njol.skript.lang.Effect`)
-  - Add `condition/`, `expression/`, `event/` subdirectories as the plugin grows.
+- `CasterAbility.kt` — main plugin class (`JavaPlugin`). On enable it calls `SkriptRegistry.registerAll()` while `Skript.isAcceptRegistrations()` is still true.
+- `skript/SkriptRegistry.kt` — single place where every syntax element is registered, plus the `AbilityUseEvent` event values.
+- `src/main/kotlin/me/qmftm/casterability/skript/` — all custom Skript syntax, organized by type: `effect/`, `condition/`, `expression/`, `section/`, and `EvtAbilityUse.kt`.
+- `ability/AbilityRegistry.kt` — singleton holding class/ability definitions, each player's class, cooldowns, and per-player disabled abilities. Syntax classes talk to the game through it rather than to `GameManager`.
 
 ## Adding New Skript Syntax
 
-1. Create a class in the appropriate `skript/<type>/` package extending the relevant Skript base class (`Effect`, `Condition`, `SimpleExpression`, etc.).
-2. Register it in `CasterAbility.registerSkriptSyntax()` with the matching `Skript.registerEffect/registerCondition/registerExpression()` call.
+1. Create a class in the appropriate `skript/<type>/` package extending the relevant Skript base class (`Effect`, `Condition`, `SimpleExpression`, etc.) with a `companion object { fun register() }`.
+2. Call that `register()` from `SkriptRegistry.registerAll()`.
+3. Document the new pattern in `src/main/resources/SYNTAX.txt`, which ships to `plugins/CasterAbility/SYNTAX.txt`.
 
 ## Dependencies
 

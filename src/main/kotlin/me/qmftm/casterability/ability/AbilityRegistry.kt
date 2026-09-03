@@ -1,5 +1,6 @@
 package me.qmftm.casterability.ability
 
+import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import java.util.UUID
 
@@ -24,6 +25,9 @@ object AbilityRegistry {
     /** 플레이어 UUID → ability id → 쿨타임 남은 tick */
     private val cooldowns = mutableMapOf<UUID, MutableMap<String, Int>>()
 
+    /** 플레이어 UUID → 잠시 꺼둔 ability id 집합 */
+    private val disabled = mutableMapOf<UUID, MutableSet<String>>()
+
     // ── 등록 ──────────────────────────────────────────────
 
     fun registerClass(cls: AbilityClass) {
@@ -46,6 +50,27 @@ object AbilityRegistry {
     fun abilitiesOfClass(classId: String): List<AbilityDefinition> =
         abilities.values.filter { it.classId == classId }
 
+    /** 플레이어가 현재 가진 클래스에 속한 모든 ability */
+    fun abilitiesOfPlayer(player: Player): List<AbilityDefinition> =
+        getPlayerClassId(player)?.let { abilitiesOfClass(it) } ?: emptyList()
+
+    /** 플레이어가 이 ability를 실제로 가지고 있는지 (클래스가 일치하는지) */
+    fun ownsAbility(player: Player, abilityId: String): Boolean {
+        val def = abilities[abilityId] ?: return false
+        return getPlayerClassId(player) == def.classId
+    }
+
+    /**
+     * 지금 이 트리거로 발동할 수 있는 ability 목록.
+     * 클래스가 맞고, 꺼두지 않은 것만 남긴다.
+     */
+    fun triggerableAbilities(player: Player, trigger: AbilityTrigger): List<AbilityDefinition> =
+        abilitiesOfPlayer(player).filter { it.trigger == trigger && !isAbilityDisabled(player, it.id) }
+
+    /** 해당 클래스를 가진 접속 중인 플레이어들 */
+    fun playersWithClass(classId: String): List<Player> =
+        Bukkit.getOnlinePlayers().filter { getPlayerClassId(it) == classId }
+
     // ── 플레이어 클래스 ────────────────────────────────────
 
     fun setPlayerClass(player: Player, classId: String) {
@@ -61,11 +86,32 @@ object AbilityRegistry {
     fun clearPlayerClass(player: Player) {
         playerClass.remove(player.uniqueId)
         cooldowns.remove(player.uniqueId)
+        disabled.remove(player.uniqueId)
     }
 
     fun clearAll() {
         playerClass.clear()
         cooldowns.clear()
+        disabled.clear()
+    }
+
+    // ── 능력 켜고 끄기 ────────────────────────────────────
+
+    /** 특정 플레이어에게만 이 ability를 잠시 꺼두거나 다시 켠다. */
+    fun setAbilityEnabled(player: Player, abilityId: String, enabled: Boolean) {
+        if (enabled) {
+            disabled[player.uniqueId]?.remove(abilityId)
+        } else {
+            disabled.getOrPut(player.uniqueId) { mutableSetOf() }.add(abilityId)
+        }
+    }
+
+    fun isAbilityDisabled(player: Player, abilityId: String): Boolean =
+        disabled[player.uniqueId]?.contains(abilityId) == true
+
+    /** 꺼둔 능력을 전부 다시 켠다. */
+    fun clearDisabled(player: Player) {
+        disabled.remove(player.uniqueId)
     }
 
     // ── 쿨타임 ────────────────────────────────────────────
@@ -81,6 +127,11 @@ object AbilityRegistry {
 
     fun isOnCooldown(player: Player, abilityId: String): Boolean =
         getCooldown(player, abilityId) > 0
+
+    /** 이 플레이어의 쿨타임을 전부 없앤다. */
+    fun clearCooldowns(player: Player) {
+        cooldowns.remove(player.uniqueId)
+    }
 
     /** 매 tick 감소 (GameManager 스케줄러에서 호출) */
     fun tickCooldowns() {
