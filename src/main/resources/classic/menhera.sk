@@ -1,35 +1,56 @@
 # ─────────────────────────────────────────────────────────
-#  멘헤라 (B등급) — CasterAbility 예제
+#  멘헤라 (B등급) — CasterAbility 기본 능력
 #
 #  패시브 "사랑해줘"
 #    자연 회복을 하지 않습니다.
-#    남에게 맞으면 (받은 피해 × 0.5)초 동안 재생 2를 얻습니다.
+#    대미지를 입으면 (입은 피해 × 0.5)초 동안 재생을 얻습니다.
 #
-#  철괴 우클릭 "자신감 해로" (쿨타임 50초)
-#    최대 체력의 25%만큼 자해한 뒤 20초간 신속 · 힘 · 저항을 얻습니다.
-#    남은 체력이 최대 체력의 25% 이하면 쓸 수 없습니다.
+#  철괴 우클릭 "자신감 해소" (쿨타임 50초)
+#    현재 체력의 50%만큼 자해한 뒤 10초간
+#    받는 피해가 66% 줄고, 공격할 때마다 0.5칸씩 회복합니다.
+#    남은 체력이 10 이하면 쓸 수 없습니다.
 # ─────────────────────────────────────────────────────────
 
 options:
     love_multiple: 0.5
     love_level: 2
-    selfharm_percent: 25
-    selfharm_seconds: 20
+
+    confidence_cost: 50          # 자해량 — 현재 체력의 %
+    confidence_seconds: 10
+    confidence_reduce: 66        # 받는 피해 감소 %
+    confidence_heal: 0.5         # 공격 시 회복량 (칸)
+    confidence_min_health: 10    # 이 체력 이하면 사용 불가 (HP 기준, 20이 만피)
 
 
 on load:
+    set the name of status effect "menhera_confidence" to "&e자신감 해소"
+
     ability class "menhera":
         name: "멘헤라"
         tier: 3
+        description:
+            "&d[&7패시브 &f- &d사랑해줘]"
+            "&f자연적으로 회복되지 않습니다."
+            "&f대신 대미지를 입으면 (입은 피해 * &c{@love_multiple}&f)초 만큼"
+            "&d재생 &f효과를 받습니다."
+            ""
+            "&d[&7철괴 우클릭 &f- &d자신감 해소] &7(쿨타임 50초)"
+            "&f자신에게 &c현재 체력의 {@confidence_cost}%&f만큼의 피해를 입힌 뒤,"
+            "&c{@confidence_seconds}초&f간 받는 데미지를 &c{@confidence_reduce}%&f 줄여 받으며"
+            "&f공격할 때마다 체력을 &a{@confidence_heal}칸&f 회복합니다."
+            "&f남은 체력이 &c{@confidence_min_health}&f 이하일 때에는 사용할 수 없습니다."
 
     ability "menhera_love":
         class: "menhera"
-        trigger: on_damaged
+        name: "사랑해줘"
+        trigger: passive
+        event: damage
 
-    ability "menhera_selfharm":
+    ability "menhera_confidence":
         class: "menhera"
+        name: "자신감 해소"
         trigger: right_click
-        item: blaze_rod
+        item: iron ingot
         cooldown: 50
 
 
@@ -43,14 +64,17 @@ on heal of player:
     cancel event
 
 
-# ── 패시브: 맞으면 재생 ───────────────────────────────────
+# ── 맞을 때: 피해 감소 → 재생 ─────────────────────────────
+# 두 가지를 한 곳에서 처리합니다. 재생 시간은 감소가 적용된
+# "실제로 입은" 피해를 기준으로 해야 하므로 순서가 중요합니다.
+#
+# trigger가 passive + event: damage 라서 PvP뿐 아니라
+# 낙하·화염 등 모든 피해에 반응합니다.
 
 on ability use "menhera_love":
-    set {_attacker} to event-entity
-    if {_attacker} is not a player:
-        stop
-    if {_attacker} is player:
-        stop
+    # 자신감 해소 중이면 받는 피해를 줄인다
+    if player has status effect "menhera_confidence":
+        set ability damage to ability damage * (100 - {@confidence_reduce}) / 100
 
     set {_seconds} to ability damage * {@love_multiple}
     if {_seconds} <= 0:
@@ -59,20 +83,27 @@ on ability use "menhera_love":
     apply regeneration {@love_level} to player for {_seconds} seconds
 
 
-# ── 철괴 우클릭: 자신감 해로 ──────────────────────────────
+# ── 자신감 해소 중: 공격할 때마다 회복 ────────────────────
+
+on damage:
+    attacker is a player
+    attacker has status effect "menhera_confidence"
+    heal attacker by {@confidence_heal}
+
+
+# ── 철괴 우클릭: 자신감 해소 ──────────────────────────────
 # cancel event 를 하면 쿨타임이 걸리지 않습니다.
 
-on ability use "menhera_selfharm":
-    set {_max} to player's max health
-    set {_cost} to {_max} * {@selfharm_percent} / 100
-
-    if player's health <= {_cost}:
-        send "&c남은 체력이 {@selfharm_percent}%% 이하라 사용할 수 없습니다." to player
+on ability use "menhera_confidence":
+    # 스크립트의 체력은 칸 단위(10 = 만피)라 HP로 바꿔서 비교한다
+    if player's health * 2 <= {@confidence_min_health}:
+        send "&c남은 체력이 {@confidence_min_health} 이하라 사용할 수 없습니다." to player
         cancel event
         stop
 
+    # 자해는 감소를 받기 전에 먼저 치른다
+    set {_cost} to player's health * {@confidence_cost} / 100
     damage player by {_cost}
-    apply speed 1 to player for {@selfharm_seconds} seconds
-    apply strength 1 to player for {@selfharm_seconds} seconds
-    apply resistance 1 to player for {@selfharm_seconds} seconds
-    send "&e자신감 해로! &f{@selfharm_seconds}초간 강화됩니다." to player
+
+    apply status effect "menhera_confidence" to player for {@confidence_seconds} seconds
+    send "&e자신감 해소! &f{@confidence_seconds}초간 버팁니다." to player
