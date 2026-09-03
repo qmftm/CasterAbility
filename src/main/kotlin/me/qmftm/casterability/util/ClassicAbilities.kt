@@ -31,6 +31,7 @@ object ClassicAbilities {
         "yandere.sk",
         "menhera.sk",
         "pig.sk",
+        "excalibur.sk",
     )
 
     private const val SYNTAX_DOC = "SYNTAX.txt"

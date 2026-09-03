@@ -1,0 +1,152 @@
+# ─────────────────────────────────────────────────────────
+#  엑스칼리버 (A등급) — CasterAbility 기본 능력
+#
+#  패시브 "별빛 한 방울"
+#    이름이 '엑스칼리버'인 금 검을 받습니다.
+#    그 검이 아니면 공격이 0의 피해만 줍니다.
+#    버리거나 상자에 넣거나 인챈트할 수 없습니다.
+#
+#  공격 "약속된 승리의 검"
+#    공격할 때마다 구속 해방이 1씩 오릅니다. (최대 7)
+#    공격은 그때의 구속 해방만큼 추가 피해를 주고,
+#    7에서 공격하면 그 공격 뒤에 1로 돌아갑니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    sword_name: &e엑스칼리버
+    release_max: 7
+
+
+on load:
+    ability class "excalibur":
+        name: "엑스칼리버"
+        tier: 2
+        description:
+            "&d[&7패시브 &f- &d별빛 한 방울]"
+            "&f'&e엑스칼리버&f'라는 이름의 금 검이 지급됩니다."
+            "&f'&e엑스칼리버&f' 이외의 공격은 &c0&f의 피해를 입힙니다."
+            "&f'&e엑스칼리버&f'는 버리거나 상자에 보관하거나"
+            "&f인챈트할 수 없습니다."
+            ""
+            "&d[&7공격 &f- &d약속된 승리의 검]"
+            "&f공격할 때마다 &6구속 해방&f이 &c1&f 증가합니다. (최대 &c{@release_max}&f)"
+            "&f공격 시 현재 &6구속 해방&f만큼 추가 피해를 입히며,"
+            "&6구속 해방&f이 &c{@release_max}&f인 상태에서 공격하면"
+            "&f공격 후 &6구속 해방&f이 &c1&f로 감소합니다."
+
+    ability "excalibur_starlight":
+        class: "excalibur"
+        name: "별빛 한 방울"
+        trigger: on_hit
+
+    ability "excalibur_promised":
+        class: "excalibur"
+        name: "약속된 승리의 검"
+        trigger: on_hit
+
+
+# ── 검 지급과 구속 해방 표시 ──────────────────────────────
+
+function excaliburGive(p: player):
+    if {_p} doesn't have a golden sword named "{@sword_name}":
+        give a golden sword named "{@sword_name}" to {_p}
+
+function excaliburRelease(p: player) :: number:
+    set {_n} to {excalibur.release::%{_p}'s uuid%}
+    if {_n} is not set:
+        set {_n} to 1
+        set {excalibur.release::%{_p}'s uuid%} to 1
+    return {_n}
+
+function excaliburUpdate(p: player):
+    set ability info "release" of {_p} to "&6구속 해방: &f%excaliburRelease({_p})%&7/{@release_max}"
+
+
+# ── 게임이 시작되면 검을 준다 ─────────────────────────────
+
+on game start:
+    loop all players:
+        if loop-player has ability class "excalibur":
+            set {excalibur.release::%loop-player's uuid%} to 1
+            excaliburGive(loop-player)
+            excaliburUpdate(loop-player)
+
+on respawn:
+    player has ability class "excalibur"
+    wait 1 tick
+    excaliburGive(player)
+    excaliburUpdate(player)
+
+
+# ── 별빛 한 방울: 엑스칼리버가 아니면 0의 피해 ────────────
+
+on ability use "excalibur_starlight":
+    if name of player's tool is not "{@sword_name}":
+        set ability damage to 0
+
+
+# ── 약속된 승리의 검: 구속 해방만큼 추가 피해 ─────────────
+# 위 별빛 한 방울이 먼저 돌아 피해를 0으로 만들었더라도
+# 여기서 다시 더해버리면 안 되므로 무기를 한 번 더 확인합니다.
+
+on ability use "excalibur_promised":
+    name of player's tool is "{@sword_name}"
+
+    # 지금 값만큼 더하고, 그 다음에 한 칸 올린다
+    set {_n} to excaliburRelease(player)
+    set ability damage to ability damage + {_n}
+
+    if {_n} >= {@release_max}:
+        set {excalibur.release::%player's uuid%} to 1
+    else:
+        add 1 to {excalibur.release::%player's uuid%}
+
+    excaliburUpdate(player)
+
+
+# ── 버릴 수 없다 ──────────────────────────────────────────
+
+on drop:
+    player has ability class "excalibur"
+    name of event-item is "{@sword_name}"
+    cancel event
+    send "&c엑스칼리버는 버릴 수 없습니다." to player
+
+
+# ── 상자 등 남의 인벤토리에 넣을 수 없다 ──────────────────
+
+on inventory click:
+    player has ability class "excalibur"
+    name of event-item is "{@sword_name}"
+
+    # 다른 인벤토리 칸을 직접 클릭했거나,
+    # 상자를 열어둔 채 쉬프트클릭으로 밀어넣으려는 경우를 막는다
+    if clicked inventory is not player's inventory:
+        cancel event
+        send "&c엑스칼리버는 보관할 수 없습니다." to player
+        stop
+
+    if click type is shift left or shift right:
+        if event-inventory is not player's inventory:
+            cancel event
+            send "&c엑스칼리버는 보관할 수 없습니다." to player
+
+
+# ── 인챈트할 수 없다 ──────────────────────────────────────
+
+on enchant:
+    name of event-item is "{@sword_name}"
+    cancel event
+    send "&c엑스칼리버는 인챈트할 수 없습니다." to player
+
+on anvil prepare:
+    name of event-item is "{@sword_name}"
+    set the result to air
+
+
+# ── 게임이 끝나면 정리 ────────────────────────────────────
+
+on game end:
+    loop all players:
+        if loop-player has ability class "excalibur":
+            delete {excalibur.release::%loop-player's uuid%}
