@@ -72,6 +72,7 @@ class GameManager(private val plugin: CasterAbility) {
         drawAbility.clear()
         drawCount.clear()
         AbilityRegistry.clearAll()
+        AbilityRegistry.setWreckPercent(cfg.wreck)
 
         broadcastIntro()
 
@@ -213,7 +214,7 @@ class GameManager(private val plugin: CasterAbility) {
                                 val event = AbilityUseEvent(p, def, AbilityTrigger.PASSIVE)
                                 Bukkit.getPluginManager().callEvent(event)
                                 if (def.cooldownSeconds > 0)
-                                    AbilityRegistry.setCooldown(p, def.id, def.cooldownSeconds * 20)
+                                    AbilityRegistry.startCooldown(p, def.id, def.cooldownSeconds)
                             }
                         }
                 }, 0L, def.passiveIntervalTicks)

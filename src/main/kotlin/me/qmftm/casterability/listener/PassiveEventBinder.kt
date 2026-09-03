@@ -147,7 +147,7 @@ class PassiveEventBinder(
 
                 if (event is EntityDamageEvent) use.damage?.let { event.damage = it }
                 if (def.cooldownSeconds > 0) {
-                    AbilityRegistry.setCooldown(player, def.id, def.cooldownSeconds * 20)
+                    AbilityRegistry.startCooldown(player, def.id, def.cooldownSeconds)
                 }
             } finally {
                 running.remove(key)

@@ -47,7 +47,7 @@ class ConfigGui(private val plugin: CasterAbility) {
         Entry(7,  "game.cooldown_bow",         "§f활 쿨타임",          EntryType.BOOL),
         Entry(8,  "game.cooldown_shield",      "§f방패 쿨타임",        EntryType.BOOL),
         Entry(9,  "game.weather_clear",        "§f맑은 날씨 강제",     EntryType.BOOL),
-        Entry(10, "game.wreck",                "§f파괴력",             EntryType.INT,  0,   10),
+        Entry(10, "game.wreck",                "§f쿨타임 감소(%)",     EntryType.INT,  0,   100, 5),
 
         Entry(13, "spawn.world_name",          "§f게임 월드 이름",     EntryType.STRING_READONLY),
         Entry(14, "spawn.random_spawn",        "§f랜덤 스폰",          EntryType.BOOL),

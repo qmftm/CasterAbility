@@ -51,7 +51,7 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
                 val used = dispatch(p, def.id, trigger)
                 // 스크립트가 cancel event 로 거부하면 쿨타임을 걸지 않는다
                 if (used != null && !used.isCancelled && def.cooldownSeconds > 0) {
-                    AbilityRegistry.setCooldown(p, def.id, def.cooldownSeconds * 20)
+                    AbilityRegistry.startCooldown(p, def.id, def.cooldownSeconds)
                 }
             }
     }

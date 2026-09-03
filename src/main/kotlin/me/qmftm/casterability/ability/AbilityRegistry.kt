@@ -28,6 +28,9 @@ object AbilityRegistry {
     /** 플레이어 UUID → 잠시 꺼둔 ability id 집합 */
     private val disabled = mutableMapOf<UUID, MutableSet<String>>()
 
+    /** config.yml game.wreck (0~100). 능력 사용 후 자동으로 거는 쿨타임을 이 비율만큼 줄인다. */
+    private var wreckPercent = 0
+
     // ── 등록 ──────────────────────────────────────────────
 
     fun registerClass(cls: AbilityClass) {
@@ -93,6 +96,7 @@ object AbilityRegistry {
         playerClass.clear()
         cooldowns.clear()
         disabled.clear()
+        wreckPercent = 0
     }
 
     // ── 능력 켜고 끄기 ────────────────────────────────────
@@ -116,9 +120,24 @@ object AbilityRegistry {
 
     // ── 쿨타임 ────────────────────────────────────────────
 
+    /** config.yml game.wreck 값. GameManager가 게임 시작 시 설정한다. */
+    fun setWreckPercent(percent: Int) {
+        wreckPercent = percent.coerceIn(0, 100)
+    }
+
     /** 쿨타임 설정 (tick 단위) */
     fun setCooldown(player: Player, abilityId: String, ticks: Int) {
         cooldowns.getOrPut(player.uniqueId) { mutableMapOf() }[abilityId] = ticks
+    }
+
+    /**
+     * 능력을 실제로 사용한 뒤 자동으로 거는 쿨타임.
+     * wreck 설정 비율만큼 줄여서 건다. (wreck 50 → 쿨타임 절반)
+     * 스크립트가 `set cooldown ...` 으로 직접 거는 것과는 다르다 — 그건 그대로 적용된다.
+     */
+    fun startCooldown(player: Player, abilityId: String, baseSeconds: Int) {
+        val ticks = (baseSeconds * 20L * (100 - wreckPercent) / 100).toInt().coerceAtLeast(0)
+        setCooldown(player, abilityId, ticks)
     }
 
     /** 쿨타임 조회 (tick 단위, 없으면 0) */

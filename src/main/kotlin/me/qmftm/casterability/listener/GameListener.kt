@@ -4,11 +4,13 @@ import me.qmftm.casterability.CasterAbility
 import me.qmftm.casterability.ability.AbilityRegistry
 import me.qmftm.casterability.game.GamePhase
 import me.qmftm.casterability.util.toComponent
+import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageEvent
+import org.bukkit.event.entity.EntityShootBowEvent
 import org.bukkit.event.entity.FoodLevelChangeEvent
 import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.inventory.ClickType
@@ -42,9 +44,23 @@ class GameListener(private val plugin: CasterAbility) : Listener {
     }
 
     @EventHandler
+    fun onShoot(event: EntityShootBowEvent) {
+        if (!gm.isRunning || !cfg.cooldownBow) return
+        val p = event.entity as? Player ?: return
+        // 무기 종류와 상관없이 활/석궁 둘 다 걸어서 활-석궁 번갈아 쓰기로 우회하지 못하게 한다
+        p.setCooldown(Material.BOW, 100)
+        p.setCooldown(Material.CROSSBOW, 100)
+    }
+
+    @EventHandler
     fun onItemDamage(event: PlayerItemDamageEvent) {
-        if (!gm.isRunning || !cfg.infinityDuration) return
-        event.isCancelled = true
+        if (!gm.isRunning) return
+        if (cfg.infinityDuration) {
+            event.isCancelled = true
+        }
+        if (cfg.cooldownShield && event.item.type == Material.SHIELD) {
+            event.player.setCooldown(Material.SHIELD, 100)
+        }
     }
 
     @EventHandler

@@ -15,6 +15,7 @@ game:
   cooldown_bow: false
   cooldown_shield: false
   weather_clear: false
+  # 능력 사용 후 자동으로 거는 쿨타임을 이 비율(%)만큼 줄인다. 0~100.
   wreck: 0
 
 spawn:
