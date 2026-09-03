@@ -137,9 +137,10 @@ Skript의 scripts 폴더에 직접 쓰지 않습니다. 남의 플러그인 폴�
 
 ## 4. 남은 것
 
-- 스크립트에서 능력을 지우고 리로드해도 이미 등록된 정의는 남습니다.
-  (`AbilityRegistry.clearDefinitions()`가 어디서도 호출되지 않습니다.)
-  Skript 리로드를 감지해 정의를 비우는 처리가 필요합니다.
+- 스크립트에서 능력을 지우고 `/sk reload all` 만 하면 지운 능력이 그대로 남습니다.
+  정의를 비우는 `AbilityRegistry.clearDefinitions()`는 `/ca reload`에서만
+  호출되므로, 순서대로 `/ca reload` → `/sk reload all` 을 해야 합니다.
+  Skript 리로드를 직접 감지해 정의를 비우면 이 순서를 신경 쓰지 않아도 됩니다.
 - `game/bossbar.sk`의 `caTimerBossbar` 세부 옵션 중 일부는
   `BossBarManager.startTimer`와 표시 형식이 다릅니다.
 - 서버 실플레이 검증.
