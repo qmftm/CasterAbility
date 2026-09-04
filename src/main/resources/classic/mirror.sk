@@ -1,0 +1,69 @@
+# ─────────────────────────────────────────────────────────
+#  거울 (B등급) — CasterAbility 기본 능력
+#
+#  공격 "반사" (쿨타임 20초)
+#    마지막으로 입은 피해의 절반을 추가로 줍니다.
+#    마지막으로 자신에게 피해를 준 대상이 지금 공격한 대상과 같다면,
+#    마지막으로 입은 피해량 전부를 추가로 줍니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    cooldown: 20
+
+
+on load:
+    ability class "mirror":
+        name: "거울"
+        tier: 3
+        description:
+            "&d[&7공격 &f- &d반사] &7(쿨타임 {@cooldown}초)"
+            "&f마지막으로 입은 피해의 &c절반&f을 추가로 줍니다."
+            "&f마지막으로 자신에게 피해를 준 대상이 지금 공격한 대상과"
+            "&f같다면, 마지막으로 입은 피해량 &c전부&f를 추가로 줍니다."
+
+    ability "mirror_reflect":
+        class: "mirror"
+        name: "반사"
+        trigger: on_hit
+
+
+# ── 맞을 때: 마지막 피해량과 가해자를 기억한다 ────────────
+# 몹이나 추락·화상 같은 환경사는 가해자가 없다. 그럴 땐 피해량만
+# 남기고 가해자 기록은 지워서, 거울 매치(반사 전부) 조건이
+# 엉뚱하게 걸리지 않게 한다.
+
+on damage:
+    victim has ability class "mirror"
+    set {mirror.lastDamage::%victim's uuid%} to damage
+    if attacker is set:
+        set {mirror.lastAttacker::%victim's uuid%} to attacker
+    else:
+        delete {mirror.lastAttacker::%victim's uuid%}
+
+
+# ── 공격할 때: 반사 ────────────────────────────────────────
+# on_hit 트리거는 쿨타임을 자동으로 걸어주지 않으므로 직접 관리한다.
+
+on ability use "mirror_reflect":
+    if player is on cooldown for ability "mirror_reflect":
+        stop
+
+    set {_damage} to {mirror.lastDamage::%player's uuid%}
+    if {_damage} is not set:
+        set {_damage} to 0
+
+    if {mirror.lastAttacker::%player's uuid%} is event-entity:
+        set ability damage to ability damage + {_damage}
+    else:
+        set ability damage to ability damage + {_damage} / 2
+
+    set cooldown of player for ability "mirror_reflect" to {@cooldown}
+
+
+# ── 게임이 끝나면 정리 ────────────────────────────────────
+
+on game end:
+    loop all players:
+        if loop-player has ability class "mirror":
+            delete {mirror.lastDamage::%loop-player's uuid%}
+            delete {mirror.lastAttacker::%loop-player's uuid%}
