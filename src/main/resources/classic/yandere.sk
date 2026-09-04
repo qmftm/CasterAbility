@@ -6,7 +6,7 @@
 #    집착 대상과 가까울수록 공격력이 올라갑니다.
 #    집착 대상이 남을 때리면 그 사람을 방해자로 10초간 기억합니다.
 #
-#  철괴 우클릭 "질투" (쿨타임 60초)
+#  철괴 좌클릭 "질투" (쿨타임 60초)
 #    방해자와 집착 대상 둘 다에게
 #    집착 대상이 방해자에게 마지막으로 입힌 피해의 150%를 줍니다.
 # ─────────────────────────────────────────────────────────
@@ -32,7 +32,7 @@ on load:
             "&c집착 대상&f이 다른 플레이어를 공격하면 해당 플레이어를"
             "&c방해자&f로 &c{@disturber_time}초&f간 기억합니다."
             ""
-            "&d[&7철괴 우클릭 &f- &d질투] &7(쿨타임 {@cooltime}초)"
+            "&d[&7철괴 좌클릭 &f- &d질투] &7(쿨타임 {@cooltime}초)"
             "&c집착 대상&f에게 현재 &c방해자&f가 존재할 경우 발동합니다."
             "&c방해자&f와 &c집착 대상&f에게 각각 &c집착 대상&f이 방해자에게"
             "&f마지막으로 입힌 피해의 &c{@jealousy_percent}%&f만큼 피해를 줍니다."
@@ -45,7 +45,7 @@ on load:
     ability "yandere_jealousy":
         class: "yandere"
         name: "질투"
-        trigger: right_click
+        trigger: left_click
         item: iron ingot
         cooldown: 60
 
@@ -101,7 +101,7 @@ on status effect expire "yandere_disturber":
     delete {yandere.disturber.damage::%player's uuid%}
 
 
-# ── 철괴 우클릭: 질투 ─────────────────────────────────────
+# ── 철괴 좌클릭: 질투 ─────────────────────────────────────
 # cancel event 를 하면 쿨타임이 걸리지 않습니다.
 
 on ability use "yandere_jealousy":

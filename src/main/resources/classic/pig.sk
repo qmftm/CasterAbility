@@ -5,7 +5,7 @@
 #    음식을 먹을 때마다 몸무게가 오릅니다. 최대 100.
 #    몸무게만큼 공격력이 오르고 이동속도가 떨어집니다.
 #
-#  철괴 우클릭 "폭주" (쿨타임 40초)
+#  철괴 좌클릭 "폭주" (쿨타임 40초)
 #    10초간 몸무게 +10, 공격력과 이동속도 +50%.
 #    끝나면 몸무게가 0이 되고 쿨타임 동안 다시 찌우지 못합니다.
 # ─────────────────────────────────────────────────────────
@@ -36,7 +36,7 @@ on load:
             "&f대미지가 (&6몸무게&f * &c{@damage_per_weight}&f) % 증가하고"
             "&f이동속도가 (&6몸무게&f / &c{@slow_divisor}&f) % 감소합니다."
             ""
-            "&d[&7철괴 우클릭 &f- &d폭주] &7(쿨타임 {@cooltime}초)"
+            "&d[&7철괴 좌클릭 &f- &d폭주] &7(쿨타임 {@cooltime}초)"
             "&c{@rampage_seconds}초&f간 자신의 &6몸무게&f가 &c{@rampage_weight}&f 증가하고"
             "&f공격력과 이동속도가 추가로 &c{@rampage_bonus}%&f 증가합니다."
             "&f폭주로 증가한 &6몸무게&f에는 최대 제한이 없습니다."
@@ -52,7 +52,7 @@ on load:
     ability "pig_rampage":
         class: "pig"
         name: "폭주"
-        trigger: right_click
+        trigger: left_click
         item: iron ingot
         cooldown: 40
 
@@ -127,7 +127,7 @@ on ability use "pig_gluttony":
         set ability damage to ability damage * (1 + {@rampage_bonus} / 100)
 
 
-# ── 철괴 우클릭: 폭주 ─────────────────────────────────────
+# ── 철괴 좌클릭: 폭주 ─────────────────────────────────────
 
 on ability use "pig_rampage":
     apply status effect "pig_rampage" to player for {@rampage_seconds} seconds
