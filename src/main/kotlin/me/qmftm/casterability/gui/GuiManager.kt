@@ -10,6 +10,7 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
 import me.qmftm.casterability.util.toSectionComponent
+import net.kyori.adventure.text.format.TextDecoration
 
 class GuiManager(private val plugin: CasterAbility) {
 
@@ -102,8 +103,8 @@ class GuiManager(private val plugin: CasterAbility) {
     fun makeItem(mat: Material, name: String, vararg lore: String): ItemStack {
         val item = ItemStack(mat)
         val meta: ItemMeta = item.itemMeta ?: return item
-        meta.displayName(name.toSectionComponent())
-        if (lore.isNotEmpty()) meta.lore(lore.map { it.toSectionComponent() })
+        meta.displayName(name.toSectionComponent().decoration(TextDecoration.ITALIC, false))
+        if (lore.isNotEmpty()) meta.lore(lore.map { it.toSectionComponent().decoration(TextDecoration.ITALIC, false) })
         item.itemMeta = meta
         return item
     }

@@ -17,10 +17,10 @@ on load:
         name: "슬롯머신"
         tier: 3
         description:
-            "&d[&7철괴 우클릭 &f- &d룰렛] &7(쿨타임 {@cooldown}초)"
+            "&d[&7철괴 우클릭 &f- &d룰렛] &7(쿨타임 100초)"
             "&f힘, 재생, 저항, 나약함, 구속 중 하나의 효과를"
             "&f무작위로 받습니다."
-            "&f효과의 지속시간은 &c{@min_seconds}~{@max_seconds}초&f 사이에서"
+            "&f효과의 지속시간은 &c5~25초&f 사이에서"
             "&f무작위로 결정됩니다."
 
     ability "slotmachine_roulette":
@@ -42,7 +42,6 @@ on ability use "slotmachine_roulette":
     set {_name} to {_names::%{_index}%}
     set {_seconds} to random integer between {@min_seconds} and {@max_seconds}
 
-    # "apply speed 1 to ..." 형태는 종류를 리터럴로만 받습니다.
-    # 변수에 담아둔 종류는 "potion effect of ... of tier ..." 로 만들어 겁니다.
-    apply potion effect of {_type} of tier 1 to player for {_seconds} seconds
+    set {_duration} to {_seconds} * 1 second
+    apply {_type} 1 to player for {_duration}
     send "&d룰렛! &f%{_name}%&f 효과를 %{_seconds}%초간 받습니다." to player

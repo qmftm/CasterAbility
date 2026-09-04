@@ -20,13 +20,13 @@ on load:
         name: "의료병"
         tier: 2
         description:
-            "&d[&7철괴 좌클릭 &f- &d구급상자] &7(쿨타임 {@firstaid_cooldown}초)"
+            "&d[&7철괴 좌클릭 &f- &d구급상자] &7(쿨타임 50초)"
             "&f2초간 움직이지 않으면서 피해를 입지 않으면"
             "&f최대 체력의 &c절반&f을 회복합니다."
             ""
             "&d[&7금괴 좌클릭 &f- &d의료용 키트] &7(게임 중 1회)"
             "&f전체 체력을 즉시 회복합니다."
-            "&f그 후 &c{@kit_regen_seconds}초&f간 재생 효과를 받습니다."
+            "&f그 후 &c10초&f간 재생 효과를 받습니다."
 
     ability "medic_firstaid":
         class: "medic"

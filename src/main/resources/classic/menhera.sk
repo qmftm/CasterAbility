@@ -31,14 +31,14 @@ on load:
         description:
             "&d[&7패시브 &f- &d사랑해줘]"
             "&f자연적으로 회복되지 않습니다."
-            "&f대신 대미지를 입으면 (입은 피해 * &c{@love_multiple}&f)초 만큼"
+            "&f대신 대미지를 입으면 (입은 피해 * &c0.5&f)초 만큼"
             "&d재생 &f효과를 받습니다."
             ""
             "&d[&7철괴 좌클릭 &f- &d자신감 해소] &7(쿨타임 50초)"
-            "&f자신에게 &c현재 체력의 {@confidence_cost}%&f만큼의 피해를 입힌 뒤,"
-            "&c{@confidence_seconds}초&f간 받는 데미지를 &c{@confidence_reduce}%&f 줄여 받으며"
-            "&f공격할 때마다 체력을 &a{@confidence_heal}칸&f 회복합니다."
-            "&f남은 체력이 &c{@confidence_min_health}&f 이하일 때에는 사용할 수 없습니다."
+            "&f자신에게 &c현재 체력의 50%&f만큼의 피해를 입힌 뒤,"
+            "&c10초&f간 받는 데미지를 &c66%&f 줄여 받으며"
+            "&f공격할 때마다 체력을 &a0.5칸&f 회복합니다."
+            "&f남은 체력이 &c10&f 이하일 때에는 사용할 수 없습니다."
 
     ability "menhera_love":
         class: "menhera"
@@ -59,7 +59,7 @@ on load:
 # 포션이나 능력에 의한 회복(magic regen)은 막지 않습니다.
 
 on heal of player:
-    heal reason is satiated or regen
+    heal reason is satiated or peaceful regeneration
     player has ability class "menhera"
     cancel event
 
@@ -80,7 +80,8 @@ on ability use "menhera_love":
     if {_seconds} <= 0:
         stop
 
-    apply regeneration {@love_level} to player for {_seconds} seconds
+    set {_duration} to {_seconds} * 1 second
+    apply regeneration {@love_level} to player for {_duration}
 
 
 # ── 자신감 해소 중: 공격할 때마다 회복 ────────────────────

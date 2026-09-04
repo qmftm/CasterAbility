@@ -16,8 +16,8 @@ on load:
         tier: 4
         description:
             "&d[&7패시브 &f- &d아야!]"
-            "&f피해를 입을 시 &c{@chance}%&f 확률로 공격한 상대에게"
-            "&c{@counter_damage}&f의 피해를 입힙니다."
+            "&f피해를 입을 시 &c35%&f 확률로 공격한 상대에게"
+            "&c2&f의 피해를 입힙니다."
 
     ability "hedgehog_ouch":
         class: "hedgehog"

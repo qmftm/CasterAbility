@@ -29,9 +29,9 @@ on load:
             "&f인챈트할 수 없습니다."
             ""
             "&d[&7공격 &f- &d약속된 승리의 검]"
-            "&f공격할 때마다 &6구속 해방&f이 &c1&f 증가합니다. (최대 &c{@release_max}&f)"
+            "&f공격할 때마다 &6구속 해방&f이 &c1&f 증가합니다. (최대 &c7&f)"
             "&f공격 시 현재 &6구속 해방&f만큼 추가 피해를 입히며,"
-            "&6구속 해방&f이 &c{@release_max}&f인 상태에서 공격하면"
+            "&6구속 해방&f이 &c7&f인 상태에서 공격하면"
             "&f공격 후 &6구속 해방&f이 &c1&f로 감소합니다."
 
     ability "excalibur_starlight":
@@ -126,7 +126,7 @@ on inventory click:
         send "&c엑스칼리버는 보관할 수 없습니다." to player
         stop
 
-    if click type is shift left or shift right:
+    if click type is shift left click or shift right click:
         if event-inventory is not player's inventory:
             cancel event
             send "&c엑스칼리버는 보관할 수 없습니다." to player
@@ -141,7 +141,7 @@ on enchant:
 
 on anvil prepare:
     name of event-item is "{@sword_name}"
-    set the result to air
+    cancel event
 
 
 # ── 게임이 끝나면 정리 ────────────────────────────────────
