@@ -231,7 +231,7 @@ class GameManager(private val plugin: CasterAbility) {
             p.teleport(loc)
             p.getAttribute(Attribute.MAX_HEALTH)?.baseValue = cfg.basicHealth.toDouble()
             p.health = cfg.basicHealth.toDouble()
-            p.foodLevel = 9 // ChzzkAbility Game.sk: food level 9.5 (Player.foodLevel은 Int라 반내림)
+            p.foodLevel = 19 // ChzzkAbility Game.sk: food level 9.5칸(0~10 스케일) = Bukkit foodLevel 19(0~20 스케일)
             p.level = cfg.basicLevel
         }
 
