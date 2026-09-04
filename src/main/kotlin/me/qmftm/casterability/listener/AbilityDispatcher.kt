@@ -143,8 +143,9 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
         val p = event.entity
         if (!isInGame(p)) return
 
+        // event-entity → 나를 죽인 플레이어. 몹이나 환경사면 null
         AbilityRegistry.triggerableAbilities(p, AbilityTrigger.ON_DEATH)
-            .forEach { def -> dispatch(p, def.id, AbilityTrigger.ON_DEATH) }
+            .forEach { def -> dispatch(p, def.id, AbilityTrigger.ON_DEATH, event.entity.killer) }
     }
 
     // ── 공통 dispatch ─────────────────────────────────────

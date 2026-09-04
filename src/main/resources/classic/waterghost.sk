@@ -1,0 +1,33 @@
+# ─────────────────────────────────────────────────────────
+#  물귀신 (C등급) — CasterAbility 기본 능력
+#
+#  패시브 "너 죽고 나 죽자"
+#    사망 시 자신을 죽인 플레이어의 능력을 물귀신으로 바꿉니다.
+# ─────────────────────────────────────────────────────────
+
+on load:
+    ability class "waterghost":
+        name: "물귀신"
+        tier: 4
+        description:
+            "&d[&7패시브 &f- &d너 죽고 나 죽자]"
+            "&f사망 시 자신을 죽인 플레이어의 능력을"
+            "&c물귀신&f으로 바꿉니다."
+
+    ability "waterghost_revenge":
+        class: "waterghost"
+        name: "너 죽고 나 죽자"
+        trigger: on_death
+
+
+# ── 사망: 킬러의 능력을 물귀신으로 바꾼다 ──────────────────
+# event-entity 는 나를 죽인 플레이어. 몹이나 추락·화상 같은 환경사에는
+# 없으므로 아래 조건에서 자연히 걸러진다.
+
+on ability use "waterghost_revenge":
+    event-entity is a player
+    event-entity is not player
+
+    set ability class of event-entity to "waterghost"
+    send "&c%player%&f님의 저주를 받아 &c물귀신&f이 되었습니다." to event-entity
+    send "&c%event-entity%&f님을 물귀신으로 만들었습니다." to player
