@@ -48,6 +48,7 @@ object SkriptRegistry {
         EffApplyStatusEffect.register()
         EffRemoveStatusEffect.register()
         EffStatusEffectName.register()
+        EffStatusEffectHologram.register()
 
         // ── Effect (액션바 부가 정보) ─────────────────────
         EffSetAbilityInfo.register()

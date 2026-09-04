@@ -183,6 +183,15 @@ game end 는 능력·쿨타임·상태이상이 지워지기 **전에** 발생�
 
     액션바 예시:  §c기절: 48 §7| §4출혈: 100
 
+머리 위 홀로그램도 등록해두면, 걸리는 순간 자동으로 뜨고 따라다니다가
+풀리면 알아서 지워집니다. 등록 안 하면 지금까지처럼 액션바에만 뜹니다.
+
+    on load:
+        set the hologram of status effect "stun" to "&c기절!"
+
+    홀로그램을 스크립트가 직접 만들거나 지울 필요는 없습니다. 상태이상 하나에
+    아머스탠드 하나가 붙어서 매 틱 플레이어 머리 위로 따라갑니다.
+
 이미 걸려 있는데 또 걸면
     apply    더 긴 쪽만 남깁니다. 짧게 다시 걸어도 남은 시간이 줄지 않습니다. (기본)
     stack    남은 시간에 더합니다. 여러 번 걸수록 길어집니다.
@@ -316,6 +325,7 @@ game end 는 능력·쿨타임·상태이상이 지워지기 **전에** 발생�
     remove status effect %string% from %player%
     clear all status effects from %player%
     set the name of status effect %string% to %string%
+    set the hologram of status effect %string% to %string%
 
 효과 — 액션바 부가 정보
     set ability info %string% (of|for) %player% to %string%

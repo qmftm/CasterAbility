@@ -63,6 +63,11 @@ object PlayerStateManager {
         effectNames[id] = displayName
     }
 
+    /** 이 상태이상이 걸린 플레이어 머리 위에 띄울 홀로그램 글자를 등록한다. */
+    fun registerHologram(id: String, text: String) {
+        EffectHologramManager.register(id, text)
+    }
+
     fun effectDisplayName(id: String): String = effectNames[id] ?: id
 
     /**
@@ -96,6 +101,7 @@ object PlayerStateManager {
             // LONGEST / IGNORE — IGNORE는 위에서 이미 걸러졌으므로 여기선 안 걸린 상태다
             else -> maxOf(current, duration)
         }
+        EffectHologramManager.spawn(player, effectId)
         return true
     }
 
@@ -110,11 +116,13 @@ object PlayerStateManager {
 
     fun deleteEffect(player: Player, effectId: String) {
         effects[player.uniqueId]?.remove(effectId)
+        EffectHologramManager.despawn(player.uniqueId, effectId)
     }
 
     /** 이 플레이어의 상태이상을 전부 없앤다. 능력 변수나 커스텀 UI는 건드리지 않는다. */
     fun clearEffects(player: Player) {
         effects.remove(player.uniqueId)
+        EffectHologramManager.despawnAll(player.uniqueId)
     }
 
     // ── 커스텀 UI ─────────────────────────────────────────
@@ -142,12 +150,14 @@ object PlayerStateManager {
         playerVariables.remove(uuid)
         effects.remove(uuid)
         customUi.remove(uuid)
+        EffectHologramManager.despawnAll(uuid)
     }
 
     fun clearAll() {
         playerVariables.clear()
         effects.clear()
         customUi.clear()
+        EffectHologramManager.clearAll()
     }
 
     // ── 틱 처리 (GameScheduler에서 매 틱 호출) ─────────────
@@ -175,6 +185,7 @@ object PlayerStateManager {
         }
 
         for ((uuid, effectId) in expired) {
+            EffectHologramManager.despawn(uuid, effectId)
             val player = Bukkit.getPlayer(uuid) ?: continue
             Bukkit.getPluginManager().callEvent(StatusEffectExpireEvent(player, effectId))
         }

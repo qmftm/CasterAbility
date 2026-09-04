@@ -27,9 +27,11 @@ object GameScheduler {
         stop()
         val scheduler = plugin.server.scheduler
 
-        // 상태이상: 남은 시간을 tick 단위로 들고 호출당 1씩 깎으므로 매 틱 실행
+        // 상태이상: 남은 시간을 tick 단위로 들고 호출당 1씩 깎으므로 매 틱 실행.
+        // 상태이상에 붙은 홀로그램도 여기서 같이 따라다니게 한다.
         effectTask = scheduler.runTaskTimer(plugin, Runnable {
             PlayerStateManager.tickEffects()
+            EffectHologramManager.follow()
         }, 0L, 1L)
 
         // 쿨타임: AbilityRegistry가 '틱' 단위로 저장하고 호출당 1씩 깎으므로 매 틱 실행.

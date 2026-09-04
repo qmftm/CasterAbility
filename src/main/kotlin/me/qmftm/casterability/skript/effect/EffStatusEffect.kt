@@ -154,3 +154,43 @@ class EffStatusEffectName : Effect() {
     override fun toString(e: Event?, d: Boolean) =
         "set the name of status effect ${effectExpr.toString(e, d)} to ${nameExpr.toString(e, d)}"
 }
+
+// ── 머리 위 홀로그램 ──────────────────────────────────────
+
+/**
+ * 이 상태이상이 걸린 플레이어 머리 위에 자동으로 홀로그램을 띄운다.
+ * 따라다니고, 상태이상이 풀리면 알아서 지워진다. AbilityWar의 Stun과 같은 방식
+ * (투명 아머스탠드에 이름표만 보이게)이다.
+ *
+ * on load:
+ *     set the hologram of status effect "stun" to "&c기절!"
+ */
+class EffStatusEffectHologram : Effect() {
+    companion object {
+        fun register() {
+            Skript.registerEffect(
+                EffStatusEffectHologram::class.java,
+                "set [the] hologram of status effect %string% to %string%"
+            )
+        }
+    }
+
+    private lateinit var effectExpr: Expression<String>
+    private lateinit var textExpr: Expression<String>
+
+    @Suppress("UNCHECKED_CAST")
+    override fun init(exprs: Array<out Expression<*>>, i: Int, k: Kleenean, p: SkriptParser.ParseResult): Boolean {
+        effectExpr = exprs[0] as Expression<String>
+        textExpr   = exprs[1] as Expression<String>
+        return true
+    }
+
+    override fun execute(event: Event) {
+        val id   = effectExpr.getSingle(event) ?: return
+        val text = textExpr.getSingle(event)   ?: return
+        PlayerStateManager.registerHologram(id, text)
+    }
+
+    override fun toString(e: Event?, d: Boolean) =
+        "set the hologram of status effect ${effectExpr.toString(e, d)} to ${textExpr.toString(e, d)}"
+}

@@ -94,6 +94,7 @@ clear ability info "charge" of player
 ```
 on load:
     set the name of status effect "stun" to "&c기절"
+    set the hologram of status effect "stun" to "&c기절!"
 
 on ability use "yandere_jealousy":
     apply status effect "stun" to event-entity for 3 seconds
@@ -103,6 +104,8 @@ on status effect apply "stun":
     if player has ability class "menhera":
         cancel event
 ```
+
+홀로그램을 등록해두면 걸린 사람 머리 위에 자동으로 뜨고 따라다니다가 풀리면 지워집니다.
 
 액션바 표시: `§c기절: 48` (상태이상은 tick, 쿨타임은 초)
 
