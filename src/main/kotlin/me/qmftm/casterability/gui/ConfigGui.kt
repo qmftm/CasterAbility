@@ -144,16 +144,23 @@ class ConfigGui(private val plugin: CasterAbility) {
         player.playSound(player.location, Sound.ITEM_BOOK_PAGE_TURN, 0.75f, 0.9f)
     }
 
+    /**
+     * 여기서 기본값을 하드코딩하면 안 된다 — 디스크의 config.yml에 키가 없을 때
+     * (예: 예전 버전에서 만든 파일을 그대로 쓰는 경우) plugin.config는 번들된
+     * config.yml 리소스의 값으로 자동 대체되는데, 기본값을 직접 넘기면 그 대체를
+     * 건너뛰고 무조건 false/0이 되어 실제 게임 로직(GameConfig.load)이 쓰는 값과
+     * GUI에 보이는 값이 어긋난다.
+     */
     private fun loadValues(): MutableMap<String, Any> {
         val c = plugin.config
         val map = allEntries.associateTo(mutableMapOf<String, Any>()) { e ->
             e.key to when (e.type) {
-                EntryType.BOOL            -> c.getBoolean(e.key, false)
-                EntryType.INT             -> c.getInt(e.key, 0)
-                EntryType.STRING_READONLY -> c.getString(e.key, "") ?: ""
+                EntryType.BOOL            -> c.getBoolean(e.key)
+                EntryType.INT             -> c.getInt(e.key)
+                EntryType.STRING_READONLY -> c.getString(e.key) ?: ""
             }
         }
-        map["game.wreck"] = c.getInt("game.wreck", 0)
+        map["game.wreck"] = c.getInt("game.wreck")
         return map
     }
 
