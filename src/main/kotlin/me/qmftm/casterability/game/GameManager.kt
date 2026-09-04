@@ -13,6 +13,7 @@ import me.qmftm.casterability.util.broadcast
 import me.qmftm.casterability.util.toComponent
 import net.kyori.adventure.bossbar.BossBar
 import org.bukkit.Bukkit
+import org.bukkit.Sound
 import org.bukkit.World
 import org.bukkit.WorldCreator
 import org.bukkit.attribute.Attribute
@@ -56,6 +57,7 @@ class GameManager(private val plugin: CasterAbility) {
     fun startGame(sender: CommandSender) {
         if (isRunning) {
             sender.sendMessage("&c이미 능력자 게임이 진행 중입니다.".toComponent())
+            (sender as? Player)?.playSound(sender.location, Sound.ENTITY_VILLAGER_NO, 0.5f, 0.85f)
             return
         }
         val cfg = plugin.gameConfig
@@ -209,6 +211,9 @@ class GameManager(private val plugin: CasterAbility) {
             p.level = cfg.basicLevel
         }
 
+        gamePlayers.mapNotNull { Bukkit.getPlayer(it) }.forEach {
+            it.playSound(it.location, Sound.ENTITY_ENDER_DRAGON_GROWL, 0.8f, 1f)
+        }
         broadcast("&a능력자 게임이 시작되었습니다!")
         phase = GamePhase.INVINCIBILITY
         startInvincibility()
@@ -313,8 +318,10 @@ class GameManager(private val plugin: CasterAbility) {
     fun stopGame(sender: CommandSender) {
         if (!isRunning) {
             sender.sendMessage("&c능력자 게임이 진행 중이지 않습니다.".toComponent())
+            (sender as? Player)?.playSound(sender.location, Sound.ENTITY_VILLAGER_NO, 0.5f, 0.85f)
             return
         }
+        Bukkit.getOnlinePlayers().forEach { it.playSound(it.location, Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f) }
         isRunning = false
         phase = GamePhase.IDLE
 

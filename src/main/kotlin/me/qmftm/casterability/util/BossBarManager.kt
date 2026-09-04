@@ -4,6 +4,7 @@ import me.qmftm.casterability.CasterAbility
 import net.kyori.adventure.bossbar.BossBar
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import org.bukkit.Bukkit
+import org.bukkit.Sound
 import org.bukkit.scheduler.BukkitTask
 
 class BossBarManager(private val plugin: CasterAbility) {
@@ -102,6 +103,9 @@ class BossBarManager(private val plugin: CasterAbility) {
                     else -> null
                 }
                 (stageMsg ?: countdownMsg)?.let { time ->
+                    Bukkit.getOnlinePlayers().forEach {
+                        it.playSound(it.location, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f)
+                    }
                     Bukkit.broadcast(
                         "${name.replace("&", "§")}§a이(가) $time§a초 남았습니다.".toSectionComponent()
                     )
