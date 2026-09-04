@@ -6,7 +6,7 @@
 #    몸무게만큼 공격력이 오르고 이동속도가 떨어집니다.
 #
 #  철괴 우클릭 "폭주" (쿨타임 40초)
-#    10초간 몸무게 +10, 공격력 +45%.
+#    10초간 몸무게 +10, 공격력과 이동속도 +50%.
 #    끝나면 몸무게가 0이 되고 쿨타임 동안 다시 찌우지 못합니다.
 # ─────────────────────────────────────────────────────────
 
@@ -19,7 +19,7 @@ options:
 
     rampage_seconds: 10
     rampage_weight: 10
-    rampage_damage: 45           # 폭주 중 추가 공격력 %
+    rampage_bonus: 50            # 폭주 중 추가 공격력·이동속도 %
     cooltime: 40
 
 
@@ -38,7 +38,7 @@ on load:
             ""
             "&d[&7철괴 우클릭 &f- &d폭주] &7(쿨타임 {@cooltime}초)"
             "&c{@rampage_seconds}초&f간 자신의 &6몸무게&f가 &c{@rampage_weight}&f 증가하고"
-            "&f공격력이 추가로 &c{@rampage_damage}%&f 증가합니다."
+            "&f공격력과 이동속도가 추가로 &c{@rampage_bonus}%&f 증가합니다."
             "&f폭주로 증가한 &6몸무게&f에는 최대 제한이 없습니다."
             ""
             "&f폭주가 종료되면 &6몸무게 게이지&f가 &c0&f이 되고"
@@ -71,6 +71,8 @@ function pigWeight(p: player) :: number:
 
 
 # ── 액션바 표시와 이동속도를 몸무게에 맞춘다 ──────────────
+# 몸무게에 의한 감속을 먼저 적용하고, 폭주 중이면 그 위에 가속을 곱한다.
+# (공격력과 같은 순서 — 몸무게로 줄고, 폭주로 늘어난다)
 
 function pigUpdate(p: player):
     set {_w} to pigWeight({_p})
@@ -81,6 +83,12 @@ function pigUpdate(p: player):
     set {_speed} to {@base_walk_speed} * (1 - {_w} / ({@slow_divisor} * 100))
     if {_speed} < 0:
         set {_speed} to 0
+
+    if {_p} has status effect "pig_rampage":
+        set {_speed} to {_speed} * (1 + {@rampage_bonus} / 100)
+    if {_speed} > 1:
+        set {_speed} to 1
+
     set {_p}'s walk speed to {_speed}
 
 
@@ -116,7 +124,7 @@ on ability use "pig_gluttony":
         set ability damage to ability damage * (1 + {_w} * {@damage_per_weight} / 100)
 
     if player has status effect "pig_rampage":
-        set ability damage to ability damage * (1 + {@rampage_damage} / 100)
+        set ability damage to ability damage * (1 + {@rampage_bonus} / 100)
 
 
 # ── 철괴 우클릭: 폭주 ─────────────────────────────────────
@@ -124,7 +132,7 @@ on ability use "pig_gluttony":
 on ability use "pig_rampage":
     apply status effect "pig_rampage" to player for {@rampage_seconds} seconds
     pigUpdate(player)
-    send "&c폭주! &f{@rampage_seconds}초간 몸무게가 {@rampage_weight} 늘고 공격력이 {@rampage_damage}%% 증가합니다." to player
+    send "&c폭주! &f{@rampage_seconds}초간 몸무게가 {@rampage_weight} 늘고 공격력과 이동속도가 {@rampage_bonus}%% 증가합니다." to player
 
 
 # ── 폭주가 끝나면 몸무게 초기화 ───────────────────────────
