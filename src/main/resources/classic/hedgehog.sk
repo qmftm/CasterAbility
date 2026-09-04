@@ -1,0 +1,36 @@
+# ─────────────────────────────────────────────────────────
+#  고슴도치 (C등급) — CasterAbility 기본 능력
+#
+#  패시브 "아야!"
+#    피해를 입을 시 35% 확률로 공격한 상대에게 2의 피해를 입힙니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    chance: 35
+    counter_damage: 2
+
+
+on load:
+    ability class "hedgehog":
+        name: "고슴도치"
+        tier: 4
+        description:
+            "&d[&7패시브 &f- &d아야!]"
+            "&f피해를 입을 시 &c{@chance}%&f 확률로 공격한 상대에게"
+            "&c{@counter_damage}&f의 피해를 입힙니다."
+
+    ability "hedgehog_ouch":
+        class: "hedgehog"
+        name: "아야!"
+        trigger: passive
+        event: damage
+
+
+# ── 맞을 때: 확률로 반격 ───────────────────────────────────
+# event-entity 는 나를 공격한 상대. 추락·화상 같은 환경사에는 없어서
+# 자연히 걸러진다.
+
+on ability use "hedgehog_ouch":
+    event-entity is set
+    chance of {@chance}%
+    damage event-entity by {@counter_damage}

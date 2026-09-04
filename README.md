@@ -76,7 +76,7 @@ on ability use "yandere_jealousy":
 
 **🎁 기본 능력**
 
-플러그인을 처음 설치하면 기본 능력 7종(얀데레·멘헤라·돼지·엑스칼리버·물귀신·거울·슬롯머신)이
+플러그인을 처음 설치하면 기본 능력들이
 `plugins/Skript/scripts/CasterAbility/classic/` 에 자동으로 깔립니다.
 자세한 능력 설명은 [기본 능력](docs/기본-능력.md) 문서를 참고하세요.
 
