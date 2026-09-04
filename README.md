@@ -146,8 +146,6 @@ plugins/Skript/scripts/CasterAbility/classic/
 - [원본 프로젝트](https://github.com/Daybreak365/AbilityWar)
 - [원본 라이선스](https://github.com/Daybreak365/AbilityWar/blob/master/LICENSE.md)
 
-게임 진행 로직은 [ChzzkAbility](https://github.com/qmftm/ChzzkAbility)에서 옮겨왔습니다.
-
 <br/>
 
 **🔗 Download**
