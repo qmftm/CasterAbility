@@ -1,0 +1,46 @@
+# ─────────────────────────────────────────────────────────
+#  슬롯머신 (B등급) — CasterAbility 기본 능력
+#
+#  철괴 우클릭 "룰렛" (쿨타임 100초)
+#    힘, 재생, 저항, 나약함, 구속 중 하나의 효과를 무작위로 받습니다.
+#    효과의 지속시간은 5~25초 사이에서 무작위로 결정됩니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    cooldown: 100
+    min_seconds: 5
+    max_seconds: 25
+
+
+on load:
+    ability class "slotmachine":
+        name: "슬롯머신"
+        tier: 3
+        description:
+            "&d[&7철괴 우클릭 &f- &d룰렛] &7(쿨타임 {@cooldown}초)"
+            "&f힘, 재생, 저항, 나약함, 구속 중 하나의 효과를"
+            "&f무작위로 받습니다."
+            "&f효과의 지속시간은 &c{@min_seconds}~{@max_seconds}초&f 사이에서"
+            "&f무작위로 결정됩니다."
+
+    ability "slotmachine_roulette":
+        class: "slotmachine"
+        name: "룰렛"
+        trigger: right_click
+        item: iron ingot
+        cooldown: 100
+
+
+# ── 철괴 우클릭: 룰렛 ──────────────────────────────────────
+# 인덱스를 하나 뽑아서 효과와 표시용 한글 이름을 나란히 골라온다.
+
+on ability use "slotmachine_roulette":
+    set {_types::*} to strength, regeneration, resistance, weakness and slowness
+    set {_names::*} to "힘", "재생", "저항", "나약함" and "구속"
+    set {_index} to random integer between 1 and 5
+    set {_type} to {_types::%{_index}%}
+    set {_name} to {_names::%{_index}%}
+    set {_seconds} to random integer between {@min_seconds} and {@max_seconds}
+
+    apply {_type} 1 to player for {_seconds} seconds
+    send "&d룰렛! &f%{_name}%&f 효과를 %{_seconds}%초간 받습니다." to player
