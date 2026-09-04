@@ -13,6 +13,7 @@ import me.qmftm.casterability.util.broadcast
 import me.qmftm.casterability.util.toComponent
 import net.kyori.adventure.bossbar.BossBar
 import org.bukkit.Bukkit
+import org.bukkit.Location
 import org.bukkit.Sound
 import org.bukkit.World
 import org.bukkit.WorldCreator
@@ -196,6 +197,26 @@ class GameManager(private val plugin: CasterAbility) {
         spawnX = center.x
         spawnZ = center.z
 
+        countdownToTeleport(world, cfg, center, 3)
+    }
+
+    /** 텔레포트 전 3·2·1초 카운트다운 (ChzzkAbility 스타일 안내). */
+    private fun countdownToTeleport(world: World, cfg: GameConfig, center: Location, secondsLeft: Int) {
+        if (!isRunning) return
+        if (secondsLeft <= 0) {
+            teleportAndStart(world, cfg, center)
+            return
+        }
+        broadcast("&e${secondsLeft}초 후 게임이 시작됩니다.")
+        Bukkit.getOnlinePlayers().forEach {
+            it.playSound(it.location, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f)
+        }
+        Bukkit.getScheduler().runTaskLater(plugin, Runnable {
+            countdownToTeleport(world, cfg, center, secondsLeft - 1)
+        }, 20L)
+    }
+
+    private fun teleportAndStart(world: World, cfg: GameConfig, center: Location) {
         for (uid in gamePlayers) {
             val p = Bukkit.getPlayer(uid) ?: continue
             val loc = if (cfg.randomSpawn) {
@@ -215,8 +236,18 @@ class GameManager(private val plugin: CasterAbility) {
             it.playSound(it.location, Sound.ENTITY_ENDER_DRAGON_GROWL, 0.8f, 1f)
         }
         broadcast("&a능력자 게임이 시작되었습니다!")
+        broadcastActiveOptions(cfg)
         phase = GamePhase.INVINCIBILITY
         startInvincibility()
+    }
+
+    /** 어떤 옵션이 켜져 있는지 안내 (ChzzkAbility Game.sk 포팅, 원본 포트에서 빠져 있었다). */
+    private fun broadcastActiveOptions(cfg: GameConfig) {
+        if (cfg.weatherClear)     broadcast("&a날씨가 &e맑음&a으로 고정됩니다")
+        if (cfg.infinityDuration) broadcast("&c내구도 무제한&a이 적용됩니다")
+        if (cfg.infinityHunger)   broadcast("&3배고픔 무제한&a이 적용됩니다")
+        if (cfg.cooldownShield)   broadcast("&e방패 쿨타임&a 적용됨")
+        if (cfg.cooldownBow)      broadcast("&6활 쿨타임&a 적용됨")
     }
 
     // ── 무적 시간 ─────────────────────────────────────────
