@@ -1,0 +1,99 @@
+# ─────────────────────────────────────────────────────────
+#  의료병 (A등급) — CasterAbility 기본 능력
+#
+#  철괴 좌클릭 "구급상자" (쿨타임 50초)
+#    2초간 움직이지 않으면서 피해를 입지 않으면
+#    최대 체력의 절반을 회복합니다.
+#
+#  금괴 좌클릭 "의료용 키트" (게임 중 1회)
+#    전체 체력을 즉시 회복하고, 그 후 10초간 재생 효과를 받습니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    firstaid_cooldown: 50
+    firstaid_ticks: 40       # 2초 = 40 tick
+    kit_regen_seconds: 10
+
+
+on load:
+    ability class "medic":
+        name: "의료병"
+        tier: 2
+        description:
+            "&d[&7철괴 좌클릭 &f- &d구급상자] &7(쿨타임 {@firstaid_cooldown}초)"
+            "&f2초간 움직이지 않으면서 피해를 입지 않으면"
+            "&f최대 체력의 &c절반&f을 회복합니다."
+            ""
+            "&d[&7금괴 좌클릭 &f- &d의료용 키트] &7(게임 중 1회)"
+            "&f전체 체력을 즉시 회복합니다."
+            "&f그 후 &c{@kit_regen_seconds}초&f간 재생 효과를 받습니다."
+
+    ability "medic_firstaid":
+        class: "medic"
+        name: "구급상자"
+        trigger: left_click
+        item: iron ingot
+        cooldown: 50
+
+    ability "medic_kit":
+        class: "medic"
+        name: "의료용 키트"
+        trigger: left_click
+        item: gold ingot
+
+
+# ── 철괴 좌클릭: 구급상자 ──────────────────────────────────
+# 좌클릭 즉시 채널링을 시작해서, 틱마다 움직임과 피해를 확인한다.
+# 둘 다 없이 {@firstaid_ticks} 틱을 버티면 회복한다.
+# 쿨타임은 좌클릭한 순간 이미 걸리므로 중간에 실패해도 다시 걸리지 않는다.
+
+on ability use "medic_firstaid":
+    delete {medic.damaged::%player's uuid%}
+    set {_loc} to location of player
+    send "&a구급상자를 사용합니다. 2초간 움직이지 말고 버티세요." to player
+
+    loop {@firstaid_ticks} times:
+        wait 1 tick
+
+        if player is not online:
+            stop
+
+        if distance between player and {_loc} > 0.1:
+            send "&c움직여서 구급상자가 취소되었습니다." to player
+            stop
+
+        if {medic.damaged::%player's uuid%} is set:
+            delete {medic.damaged::%player's uuid%}
+            send "&c피해를 입어 구급상자가 취소되었습니다." to player
+            stop
+
+    heal player by (player's max health / 2)
+    send "&a구급상자 성공! 체력을 회복했습니다." to player
+
+
+on damage:
+    victim has ability class "medic"
+    set {medic.damaged::%victim's uuid%} to true
+
+
+# ── 금괴 좌클릭: 의료용 키트 (게임 중 1회) ──────────────────
+
+on ability use "medic_kit":
+    if {medic.kitUsed::%player's uuid%} is set:
+        send "&c의료용 키트는 게임당 한 번만 사용할 수 있습니다." to player
+        cancel event
+        stop
+
+    set {medic.kitUsed::%player's uuid%} to true
+    heal player
+    apply regeneration 1 to player for {@kit_regen_seconds} seconds
+    send "&a의료용 키트 사용! 체력을 전부 회복하고 {@kit_regen_seconds}초간 재생 효과를 받습니다." to player
+
+
+# ── 게임이 끝나면 정리 ────────────────────────────────────
+
+on game end:
+    loop all players:
+        if loop-player has ability class "medic":
+            delete {medic.damaged::%loop-player's uuid%}
+            delete {medic.kitUsed::%loop-player's uuid%}
