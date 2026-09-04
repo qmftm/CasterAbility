@@ -32,11 +32,30 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
 
         val trigger = when (event.action) {
             Action.RIGHT_CLICK_AIR, Action.RIGHT_CLICK_BLOCK -> AbilityTrigger.RIGHT_CLICK
+            // 좌클릭이 상대를 맞히면 여긴 안 뜨고 onLeftClickHit()이 대신 잡는다.
+            // 여긴 허공/블록을 향해 휘둘렀을 때만 온다.
             Action.LEFT_CLICK_AIR, Action.LEFT_CLICK_BLOCK   -> AbilityTrigger.LEFT_CLICK
             else -> return
         }
 
-        // 플레이어의 클래스에 속한 ability 중 트리거/아이템이 맞는 것을 발동
+        handleClick(p, trigger)
+    }
+
+    /**
+     * 좌클릭이 대상(플레이어든 몹이든)을 실제로 맞혔을 때도 발동시킨다.
+     *
+     * 곡괭이질 같은 채굴은 이 이벤트가 안 뜨므로 광질 스팸 걱정은 없다 —
+     * EntityDamageByEntityEvent는 뭔가를 실제로 때렸을 때만 발생한다.
+     */
+    @EventHandler(priority = EventPriority.HIGH)
+    fun onLeftClickHit(event: EntityDamageByEntityEvent) {
+        val attacker = event.damager as? Player ?: return
+        if (!isInGame(attacker)) return
+        handleClick(attacker, AbilityTrigger.LEFT_CLICK)
+    }
+
+    /** RIGHT_CLICK/LEFT_CLICK 공통: 아이템을 확인하고, 쿨타임이면 안내만 하고, 아니면 발동시킨다. */
+    private fun handleClick(p: Player, trigger: AbilityTrigger) {
         AbilityRegistry.triggerableAbilities(p, trigger)
             .filter { def ->
                 // item이 지정된 경우 손에 들고 있어야 함

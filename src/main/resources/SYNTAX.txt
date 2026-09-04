@@ -60,7 +60,8 @@ ability 항목
 
 trigger 종류
     right_click     손에 든 아이템으로 우클릭
-    left_click      좌클릭
+    left_click      손에 든 아이템으로 좌클릭. 허공/블록을 향해 휘두르거나,
+                    무언가(플레이어·몹)를 실제로 맞혀도 뜬다
     passive         passive_interval 마다 자동
     on_hit          내가 남을 때렸을 때
     on_damaged      내가 맞았을 때
