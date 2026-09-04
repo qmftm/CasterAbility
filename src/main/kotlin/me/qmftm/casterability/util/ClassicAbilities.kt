@@ -32,6 +32,21 @@ object ClassicAbilities {
         "menhera.sk",
         "pig.sk",
         "excalibur.sk",
+        "waterghost.sk",
+        "mirror.sk",
+        "slotmachine.sk",
+        "hedgehog.sk",
+        "medic.sk",
+        "firefight.sk",
+        "devilboots.sk",
+        "showmanship.sk",
+        "feather.sk",
+        "survivor.sk",
+        "jellyfish.sk",
+        "breakfall.sk",
+        "stalker.sk",
+        "instinct.sk",
+        "demigod.sk",
     )
 
     private const val SYNTAX_DOC = "SYNTAX.txt"

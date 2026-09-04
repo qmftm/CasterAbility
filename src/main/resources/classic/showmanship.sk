@@ -1,0 +1,82 @@
+# ─────────────────────────────────────────────────────────
+#  쇼맨쉽 (B등급) — AbilityWar 이식
+#
+#  패시브 "무대 장악"
+#    주변 10칸 안의 관객 수에 따라 힘 효과를 받습니다.
+#    플레이어는 1명, 다른 생명체는 0.2명으로 셉니다.
+#
+#  공격 "피날레"
+#    관객이 4명 이상일 때, 체력이 30% 미만인 상대를 공격하면 처형합니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    radius: 10
+    mob_weight: 0.2
+    execute_percent: 30
+
+
+on load:
+    ability class "showmanship":
+        name: "쇼맨쉽"
+        tier: 3
+        description:
+            "&d[&7패시브 &f- &d무대 장악]"
+            "&f주변 &c{@radius}칸&f 안의 생명체 수에 따라 효과를 받습니다."
+            "&f플레이어는 &c1&f명, 그 외 생명체는 &c{@mob_weight}&f명으로 셉니다."
+            "&a2명 이상 4명 미만 &7: &6힘 II"
+            "&a4명 이상 &7: &6힘 III"
+            ""
+            "&d[&7공격 &f- &d피날레]"
+            "&f관객이 &c4명&f 이상일 때 체력이 최대 체력의"
+            "&c{@execute_percent}%&f 미만인 상대를 공격하면 그 자리에서 &4처형&f합니다."
+
+    ability "showmanship_stage":
+        class: "showmanship"
+        name: "무대 장악"
+        trigger: passive
+        passive_interval: 10
+
+    ability "showmanship_finale":
+        class: "showmanship"
+        name: "피날레"
+        trigger: on_hit
+
+
+# ── 관객 수 세기 ──────────────────────────────────────────
+# 자기 자신은 빼고, 플레이어는 1명 · 나머지 생명체는 {@mob_weight}명으로 친다.
+
+function showmanPoint(p: player) :: number:
+    set {_players} to size of (all players in radius {@radius} around {_p}) - 1
+    set {_living} to size of (all living entities in radius {@radius} around {_p})
+    set {_mobs} to {_living} - {_players} - 1
+    if {_mobs} < 0:
+        set {_mobs} to 0
+    return {_players} + {_mobs} * {@mob_weight}
+
+
+# ── 패시브: 관객 수만큼 힘 ────────────────────────────────
+
+on ability use "showmanship_stage":
+    set {_point} to showmanPoint(player)
+
+    if {_point} >= 4:
+        apply strength 3 to player for 2 seconds
+        set ability info "stage" of player to "&c관객: &f%{_point}% &7(힘 III)"
+    else if {_point} >= 2:
+        apply strength 2 to player for 2 seconds
+        set ability info "stage" of player to "&6관객: &f%{_point}% &7(힘 II)"
+    else:
+        set ability info "stage" of player to "&7관객: &f%{_point}%"
+
+
+# ── 공격: 피날레 ──────────────────────────────────────────
+
+on ability use "showmanship_finale":
+    event-entity is a player
+    showmanPoint(player) >= 4
+
+    set {_target} to event-entity
+    {_target}'s health < max health of {_target} * {@execute_percent} / 100
+
+    damage {_target} by 1000
+    broadcast "&c[쇼맨쉽] &f%player%&f님이 &c%{_target}%&f님을 처형했습니다!"

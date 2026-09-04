@@ -1,0 +1,46 @@
+# ─────────────────────────────────────────────────────────
+#  해파리 (A등급) — AbilityWar 이식
+#
+#  공격 "감전"
+#    플레이어를 공격하면 대상을 1.5초간 기절시켜
+#    거의 움직이지 못하게 합니다.
+#
+#  원본은 기절을 직접 구현하지만, 여기서는 상태이상 "jelly_stun" 과
+#  둔화·채굴 피로를 같이 걸어서 흉내냅니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    stun_ticks: 30       # 1.5초
+
+
+on load:
+    set the name of status effect "jelly_stun" to "&e기절"
+    set the hologram of status effect "jelly_stun" to "&e기절!"
+
+    ability class "jellyfish":
+        name: "해파리"
+        tier: 2
+        description:
+            "&d[&7공격 &f- &d감전]"
+            "&f플레이어를 공격하면 대상을 &c1.5초&f간 &e기절&f시켜"
+            "&f거의 움직이지 못하게 합니다."
+            "&7기절한 상대는 둔화와 채굴 피로를 함께 받습니다."
+
+    ability "jellyfish_shock":
+        class: "jellyfish"
+        name: "감전"
+        trigger: on_hit
+
+
+# ── 공격: 감전 ────────────────────────────────────────────
+
+on ability use "jellyfish_shock":
+    event-entity is a player
+    set {_target} to event-entity
+
+    apply status effect "jelly_stun" to {_target} for {@stun_ticks} ticks
+    apply slowness 7 to {_target} for {@stun_ticks} ticks
+    apply mining fatigue 3 to {_target} for {@stun_ticks} ticks
+
+    send "&e감전! &f%{_target}%&f님을 기절시켰습니다." to player
+    send "&e해파리에 감전되어 몸이 굳었습니다." to {_target}

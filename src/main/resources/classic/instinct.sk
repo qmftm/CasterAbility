@@ -1,0 +1,103 @@
+# ─────────────────────────────────────────────────────────
+#  생존 본능 (B등급) — AbilityWar 이식
+#
+#  패시브 "생존 본능"
+#    게임 중 단 한 번, 치명적인 피해를 받으면 체력 3칸을 남기고
+#    살아납니다. 발동하면 주변 생명체를 밀쳐내고 신속 III을 5초간
+#    받으며, 4초간 무적/공격 불능 상태가 됩니다.
+#    다른 플레이어를 처치하면 다시 한 번 쓸 수 있습니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    revive_health: 3      # 남기는 체력 (칸)
+    shield_seconds: 4
+    speed_seconds: 5
+    push_radius: 6
+
+
+on load:
+    set the name of status effect "instinct_shield" to "&d무적/공격 불능"
+    set the hologram of status effect "instinct_shield" to "&d생존 본능!"
+
+    ability class "instinct":
+        name: "생존 본능"
+        tier: 3
+        description:
+            "&d[&7패시브 &f- &d생존 본능]"
+            "&f게임 중 &c단 한 번&f, 치명적인 피해를 받았을 때"
+            "&f체력을 &c{@revive_health}칸&f 남기고 살아납니다."
+            ""
+            "&f발동하면 주변 생명체를 모두 밀쳐내고"
+            "&b신속 III&f를 &c{@speed_seconds}초&f간 받으며,"
+            "&c{@shield_seconds}초&f간 &d무적/공격 불능&f 상태가 됩니다."
+            ""
+            "&f다른 플레이어를 처치하면 다시 한 번 쓸 수 있습니다."
+
+    ability "instinct_survive":
+        class: "instinct"
+        name: "생존 본능"
+        trigger: passive
+        event: damage
+
+    ability "instinct_silence":
+        class: "instinct"
+        name: "공격 불능"
+        trigger: on_hit
+
+    ability "instinct_reset":
+        class: "instinct"
+        name: "재충전"
+        trigger: on_kill
+
+
+# ── 치명타를 맞으면 살아난다 ──────────────────────────────
+# 체력은 칸 단위(10 = 만피), ability damage 는 HP 단위라 2로 나눠 비교합니다.
+
+on ability use "instinct_survive":
+    # 무적 중에는 아무 피해도 받지 않는다
+    if player has status effect "instinct_shield":
+        set ability damage to 0
+        stop
+
+    # 이미 썼으면 그대로 죽는다
+    if {instinct.used::%player's uuid%} is set:
+        stop
+
+    # 이 피해로 죽지 않으면 아낀다
+    if player's health - ability damage / 2 > 0:
+        stop
+
+    set {instinct.used::%player's uuid%} to true
+    set ability damage to 0
+    set player's health to {@revive_health}
+
+    apply speed 3 to player for {@speed_seconds} seconds
+    apply status effect "instinct_shield" to player for {@shield_seconds} seconds
+
+    # 주변 생명체를 밀쳐낸다
+    loop all living entities in radius {@push_radius} around player:
+        if loop-value is not player:
+            push loop-value (vector from player to loop-value) at speed 1.5
+
+    send "&d생존 본능! &f죽음의 문턱에서 살아났습니다." to player
+
+
+# ── 무적 중에는 공격도 하지 못한다 ────────────────────────
+
+on ability use "instinct_silence":
+    player has status effect "instinct_shield"
+    set ability damage to 0
+
+
+# ── 처치하면 다시 쓸 수 있다 ──────────────────────────────
+
+on ability use "instinct_reset":
+    {instinct.used::%player's uuid%} is set
+    delete {instinct.used::%player's uuid%}
+    send "&d생존 본능을 다시 쓸 수 있습니다!" to player
+
+
+on game end:
+    loop all players:
+        if loop-player has ability class "instinct":
+            delete {instinct.used::%loop-player's uuid%}

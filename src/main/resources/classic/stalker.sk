@@ -1,0 +1,105 @@
+# ─────────────────────────────────────────────────────────
+#  스토커 (S등급) — AbilityWar 이식
+#
+#  패시브 "오직 너만을"
+#    같은 대상을 계속 공격하면 스택이 쌓입니다.
+#    스택 하나당 추가 피해를 주고, 때린 대상을 잠시 실명시킵니다.
+#    다른 대상을 때리면 스택은 1로 돌아갑니다.
+#
+#  철괴 우클릭 "오직 나만이" (쿨타임 120초)
+#    마지막으로 때린 플레이어에게 순식간에 다가가
+#    그 대상을 3초간 실명시킵니다.
+#
+#  원본은 관전 모드로 날아가지만, 여기서는 곧바로 이동합니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    stack_damage: 0.2
+    blind_ticks: 20
+    cooldown: 120
+    blind_seconds: 3
+
+
+on load:
+    ability class "stalker":
+        name: "스토커"
+        tier: 1
+        description:
+            "&d[&7패시브 &f- &d오직 너만을]"
+            "&f같은 대상을 계속 공격하면 &6스택&f이 쌓입니다."
+            "&f스택 하나당 추가 피해 &c{@stack_damage}&f를 주고,"
+            "&f때린 대상을 잠시 &8실명&f시킵니다."
+            "&f다른 대상을 때리면 스택은 &c1&f로 돌아갑니다."
+            ""
+            "&d[&7철괴 우클릭 &f- &d오직 나만이] &7(쿨타임 {@cooldown}초)"
+            "&f마지막으로 때린 플레이어에게 순식간에 다가가"
+            "&f그 대상을 &c{@blind_seconds}초&f간 &8실명&f시킵니다."
+
+    ability "stalker_only_you":
+        class: "stalker"
+        name: "오직 너만을"
+        trigger: on_hit
+
+    ability "stalker_only_me":
+        class: "stalker"
+        name: "오직 나만이"
+        trigger: right_click
+        item: iron ingot
+        cooldown: 120
+
+
+# ── 공격: 스택 쌓기 ───────────────────────────────────────
+
+on ability use "stalker_only_you":
+    event-entity is a player
+    set {_victim} to event-entity
+
+    if {stalker.victim::%player's uuid%} is {_victim}:
+        add 1 to {stalker.stack::%player's uuid%}
+    else:
+        set {stalker.victim::%player's uuid%} to {_victim}
+        set {stalker.stack::%player's uuid%} to 1
+
+    set {_stack} to {stalker.stack::%player's uuid%}
+    set ability damage to ability damage + {_stack} * {@stack_damage}
+    apply blindness 1 to {_victim} for {@blind_ticks} ticks
+    set ability info "stalker" of player to "&5%{_victim}%&7: &f%{_stack}% 스택"
+
+
+# ── 철괴 우클릭: 대상에게 다가가기 ────────────────────────
+# cancel event 를 하면 쿨타임이 걸리지 않습니다.
+
+on ability use "stalker_only_me":
+    set {_victim} to {stalker.victim::%player's uuid%}
+
+    if {_victim} is not set:
+        send "&c마지막으로 때린 플레이어가 없습니다." to player
+        cancel event
+        stop
+
+    if {_victim} is not online:
+        send "&c대상이 접속 중이 아닙니다." to player
+        cancel event
+        stop
+
+    teleport player to {_victim}
+    apply blindness 1 to {_victim} for {@blind_seconds} seconds
+    send "&5오직 나만이! &f%{_victim}%&f님을 찾아갔습니다." to player
+    send "&5%player%&f님이 당신을 찾아왔습니다..." to {_victim}
+
+
+# ── 대상이 죽으면 스택 초기화 ─────────────────────────────
+
+on death of player:
+    loop all players:
+        if {stalker.victim::%loop-player's uuid%} is victim:
+            delete {stalker.victim::%loop-player's uuid%}
+            delete {stalker.stack::%loop-player's uuid%}
+            clear ability info "stalker" of loop-player
+
+
+on game end:
+    loop all players:
+        if loop-player has ability class "stalker":
+            delete {stalker.victim::%loop-player's uuid%}
+            delete {stalker.stack::%loop-player's uuid%}

@@ -1,0 +1,77 @@
+# ─────────────────────────────────────────────────────────
+#  이걸 사네 (A등급)
+#
+#  피격 "살았죠?"
+#    피해를 받은 후 체력이 최대 체력의 5% 이하라면
+#    3초간 무적이 되고 공격력이 50% 증가합니다.
+#    체력이 최대 체력의 20% 이하라면 받는 피해가 30% 감소합니다.
+#
+#  상태효과 "무적"
+#    모든 피해를 받지 않습니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    invincible_seconds: 3
+    rage_percent: 50
+    low_percent: 5
+    guard_percent: 20
+    guard_reduce: 30
+
+
+on load:
+    set the name of status effect "survivor_invincible" to "&e무적"
+    set the hologram of status effect "survivor_invincible" to "&e무적!"
+
+    ability class "survivor":
+        name: "이걸 사네"
+        tier: 2
+        description:
+            "&d[&7피격 &f- &d살았죠?]"
+            "&f피해를 받은 후 체력이 최대 체력의 &c{@low_percent}%&f 이하라면"
+            "&c{@invincible_seconds}초&f간 &e무적&f 상태가 되며,"
+            "&f공격력이 &c{@rage_percent}%&f 증가합니다."
+            ""
+            "&f체력이 최대 체력의 &c{@guard_percent}%&f 이하라면"
+            "&f받는 피해가 &c{@guard_reduce}%&f 감소합니다."
+            ""
+            "&d[&7상태효과 &f- &e무적]"
+            "&f모든 피해를 받지 않습니다."
+
+    ability "survivor_alive":
+        class: "survivor"
+        name: "살았죠?"
+        trigger: passive
+        event: damage
+
+    ability "survivor_rage":
+        class: "survivor"
+        name: "무적"
+        trigger: on_hit
+
+
+# ── 피격: 무적 → 피해 감소 → 발동 순서로 본다 ─────────────
+# 스크립트의 체력은 칸 단위(10 = 만피), ability damage 는 HP 단위라
+# 비교할 때 피해를 2로 나눠 칸으로 바꿉니다.
+
+on ability use "survivor_alive":
+    # 무적 중에는 모든 피해를 받지 않는다
+    if player has status effect "survivor_invincible":
+        set ability damage to 0
+        stop
+
+    # 체력이 낮으면 받는 피해가 줄어든다
+    if player's health <= max health of player * {@guard_percent} / 100:
+        set ability damage to ability damage * (100 - {@guard_reduce}) / 100
+
+    # 감소까지 적용하고도 체력이 5% 이하로 남으면 무적
+    set {_left} to player's health - ability damage / 2
+    if {_left} <= max health of player * {@low_percent} / 100:
+        apply status effect "survivor_invincible" to player for {@invincible_seconds} seconds
+        send "&e살았죠? &f{@invincible_seconds}초간 무적이 되고 공격력이 {@rage_percent}%% 증가합니다." to player
+
+
+# ── 무적 중에는 공격력이 오른다 ───────────────────────────
+
+on ability use "survivor_rage":
+    player has status effect "survivor_invincible"
+    set ability damage to ability damage * (100 + {@rage_percent}) / 100

@@ -1,0 +1,81 @@
+# ─────────────────────────────────────────────────────────
+#  깃털 (A등급) — AbilityWar 이식
+#
+#  철괴 우클릭 "느린 낙하?" (쿨타임 80초)
+#    10초간 비행할 수 있습니다.
+#    비행 중 웅크리면 바라보는 방향으로 돌진합니다.
+#
+#  패시브 "느린? 낙하"
+#    낙하 대미지를 무시합니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    fly_seconds: 10
+    cooldown: 80
+    dash_speed: 1.5
+
+
+on load:
+    ability class "feather":
+        name: "깃털"
+        tier: 2
+        description:
+            "&d[&7철괴 우클릭 &f- &d느린 낙하?] &7(쿨타임 {@cooldown}초)"
+            "&c{@fly_seconds}초&f간 &b비행&f할 수 있습니다."
+            "&b비행&f 중 웅크리면 바라보는 방향으로 돌진합니다."
+            ""
+            "&d[&7패시브 &f- &d느린? 낙하]"
+            "&f낙하 대미지를 무시합니다."
+
+    ability "feather_flight":
+        class: "feather"
+        name: "느린 낙하?"
+        trigger: right_click
+        item: iron ingot
+        cooldown: 80
+
+
+# ── 철괴 우클릭: 비행 ─────────────────────────────────────
+
+on ability use "feather_flight":
+    set {feather.flying::%player's uuid%} to true
+    set flight mode of player to true
+    send "&b{@fly_seconds}초간 비행합니다. &f웅크리면 바라보는 방향으로 돌진합니다." to player
+
+    wait {@fly_seconds} seconds
+
+    delete {feather.flying::%player's uuid%}
+    if player is online:
+        set flight mode of player to false
+        send "&7비행이 끝났습니다." to player
+
+
+# ── 비행 중 웅크리기: 돌진 ────────────────────────────────
+
+on sneak toggle:
+    player has ability class "feather"
+    {feather.flying::%player's uuid%} is set
+    player is sneaking
+    push player forward at speed {@dash_speed}
+
+
+# ── 패시브: 낙하 대미지 무시 ──────────────────────────────
+
+on damage:
+    victim has ability class "feather"
+    damage cause is fall
+    cancel event
+
+
+# ── 비행 상태 정리 ────────────────────────────────────────
+# 비행 허용은 플레이어에게 직접 걸어둔 것이라 알아서 풀리지 않습니다.
+
+on quit:
+    player has ability class "feather"
+    delete {feather.flying::%player's uuid%}
+
+on game end:
+    loop all players:
+        if loop-player has ability class "feather":
+            delete {feather.flying::%loop-player's uuid%}
+            set flight mode of loop-player to false

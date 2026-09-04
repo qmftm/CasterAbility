@@ -1,0 +1,54 @@
+# ─────────────────────────────────────────────────────────
+#  이열치열 (B등급) — AbilityWar 이식
+#
+#  패시브 "이열치열"
+#    화염 피해를 받지 않고, 그만큼 체력을 회복합니다.
+#
+#  철괴 우클릭 "불사지르기" (쿨타임 20초)
+#    8초간 몸에 불을 붙입니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    cooldown: 20
+    fire_seconds: 8
+
+
+on load:
+    ability class "firefight":
+        name: "이열치열"
+        tier: 3
+        description:
+            "&d[&7패시브 &f- &d이열치열]"
+            "&c화염&f 피해를 입을 때 피해를 받지 않고,"
+            "&f그 피해만큼 체력을 &a회복&f합니다."
+            "&7용암 피해는 그대로 들어오니 조심하세요."
+            ""
+            "&d[&7철괴 우클릭 &f- &d불사지르기] &7(쿨타임 {@cooldown}초)"
+            "&c{@fire_seconds}초&f간 몸에 불을 붙입니다."
+            "&f이열치열에게 불은 곧 회복입니다."
+
+    ability "firefight_ignite":
+        class: "firefight"
+        name: "불사지르기"
+        trigger: right_click
+        item: iron ingot
+        cooldown: 20
+
+
+# ── 패시브: 화염 피해를 회복으로 ──────────────────────────
+# 피해 종류(damage cause)를 봐야 하는데 능력 트리거 안에서는 볼 수 없어서
+# 순수 Skript 이벤트로 받습니다.
+
+on damage:
+    victim has ability class "firefight"
+    damage cause is fire or fire tick
+    set {_heal} to damage
+    cancel event
+    heal victim by {_heal}
+
+
+# ── 철괴 우클릭: 불사지르기 ───────────────────────────────
+
+on ability use "firefight_ignite":
+    ignite player for {@fire_seconds} seconds
+    send "&c불사지르기! &f{@fire_seconds}초간 몸에 불이 붙습니다." to player

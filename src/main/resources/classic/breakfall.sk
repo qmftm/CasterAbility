@@ -1,0 +1,79 @@
+# ─────────────────────────────────────────────────────────
+#  낙법의 달인 (C등급) — AbilityWar 이식
+#
+#  패시브 "물낙법"
+#    낙하 대미지를 받지 않습니다.
+#    대신 착지하는 순간, 떨어진 거리에 비례해 주변 4칸 안의
+#    생명체에게 충격을 줍니다. 가까울수록 더 아픕니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    radius: 4
+    divisor: 1.5         # 낙하 거리를 피해로 바꿀 때 나누는 값
+    max_damage: 20
+    min_fall: 4          # 이 거리 밑으로 떨어지면 충격이 없다
+
+
+on load:
+    ability class "breakfall":
+        name: "낙법의 달인"
+        tier: 4
+        description:
+            "&d[&7패시브 &f- &d물낙법]"
+            "&f낙하 대미지를 받지 않습니다."
+            "&f대신 착지하는 순간 떨어진 거리에 비례해"
+            "&f주변 &c{@radius}칸&f 안의 생명체에게 충격을 줍니다."
+            "&f가까이 있을수록 더 아픕니다."
+            "&7(&c{@min_fall}칸&7 이상 떨어져야 발동합니다)"
+
+    ability "breakfall_landing":
+        class: "breakfall"
+        name: "물낙법"
+        trigger: passive
+        passive_interval: 2
+
+
+# ── 착지 감지 ─────────────────────────────────────────────
+# 낙하 거리가 0이 되는 순간을 착지로 봅니다. 직전 틱의 낙하 거리를
+# 기억해 두었다가, 그 값으로 충격을 계산합니다.
+
+on ability use "breakfall_landing":
+    set {_now} to fall distance of player
+    set {_before} to {breakfall.fall::%player's uuid%}
+    set {breakfall.fall::%player's uuid%} to {_now}
+
+    if {_before} is not set:
+        stop
+
+    # 아직 떨어지는 중이거나, 애초에 별로 안 떨어졌다
+    {_now} <= 0
+    {_before} >= {@min_fall}
+
+    set {_power} to {_before} / {@divisor}
+    if {_power} > {@max_damage}:
+        set {_power} to {@max_damage}
+
+    set {_center} to location of player
+
+    loop all living entities in radius {@radius} around {_center}:
+        if loop-value is not player:
+            set {_dist} to distance between loop-value and {_center}
+            set {_dmg} to {_power} * (1 - {_dist} / {@radius})
+            if {_dmg} > 0:
+                damage loop-value by {_dmg}
+
+    send "&3물낙법! &f주변에 충격을 주었습니다." to player
+
+
+# ── 낙하 대미지 무시 ──────────────────────────────────────
+
+on damage:
+    victim has ability class "breakfall"
+    damage cause is fall
+    cancel event
+
+
+on game end:
+    loop all players:
+        if loop-player has ability class "breakfall":
+            delete {breakfall.fall::%loop-player's uuid%}

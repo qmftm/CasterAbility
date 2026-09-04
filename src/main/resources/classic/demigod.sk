@@ -1,0 +1,47 @@
+# ─────────────────────────────────────────────────────────
+#  데미갓 (S등급) — AbilityWar 이식
+#
+#  패시브 "반신"
+#    공격을 받으면 30% 확률로 5초간
+#    흡수 / 재생 / 저항 중 하나의 효과를 받습니다.
+# ─────────────────────────────────────────────────────────
+
+options:
+    chance: 30
+    buff_seconds: 5
+
+
+on load:
+    ability class "demigod":
+        name: "데미갓"
+        tier: 1
+        description:
+            "&d[&7패시브 &f- &d반신]"
+            "&f피해를 받으면 &c{@chance}%&f 확률로 &c{@buff_seconds}초&f간"
+            "&e흡수&f / &c재생&f / &3저항&f 중 하나의 효과를 받습니다."
+            ""
+            "&f모든 것은 사용자의 운에 달려 있습니다."
+
+    ability "demigod_blessing":
+        class: "demigod"
+        name: "반신"
+        trigger: passive
+        event: damage
+
+
+# ── 피격: 확률로 축복 ─────────────────────────────────────
+
+on ability use "demigod_blessing":
+    chance of {@chance}%
+
+    set {_roll} to random integer between 1 and 3
+
+    if {_roll} is 1:
+        apply absorption 2 to player for {@buff_seconds} seconds
+        send "&d반신의 가호! &e흡수&f 효과를 {@buff_seconds}초간 받습니다." to player
+    else if {_roll} is 2:
+        apply regeneration 1 to player for {@buff_seconds} seconds
+        send "&d반신의 가호! &c재생&f 효과를 {@buff_seconds}초간 받습니다." to player
+    else:
+        apply resistance 2 to player for {@buff_seconds} seconds
+        send "&d반신의 가호! &3저항&f 효과를 {@buff_seconds}초간 받습니다." to player
