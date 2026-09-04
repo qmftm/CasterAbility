@@ -114,6 +114,9 @@ class GameManager(private val plugin: CasterAbility) {
                 if (!isRunning) return@prepareGameWorld
                 if (world == null) {
                     broadcast("&c게임 월드를 준비하지 못했습니다. 콘솔 로그를 확인하세요.")
+                    // stopGame()은 WORLD_GENERATING 중엔 멈추길 거부하므로, 실패로
+                    // 확정된 지금은 그 단계를 벗어난 뒤에 정리를 맡긴다
+                    phase = GamePhase.IDLE
                     stopGame(Bukkit.getConsoleSender())
                     return@prepareGameWorld
                 }
@@ -228,7 +231,7 @@ class GameManager(private val plugin: CasterAbility) {
             p.teleport(loc)
             p.getAttribute(Attribute.MAX_HEALTH)?.baseValue = cfg.basicHealth.toDouble()
             p.health = cfg.basicHealth.toDouble()
-            p.foodLevel = 20
+            p.foodLevel = 9 // ChzzkAbility Game.sk: food level 9.5 (Player.foodLevel은 Int라 반내림)
             p.level = cfg.basicLevel
         }
 
@@ -349,6 +352,13 @@ class GameManager(private val plugin: CasterAbility) {
     fun stopGame(sender: CommandSender) {
         if (!isRunning) {
             sender.sendMessage("&c능력자 게임이 진행 중이지 않습니다.".toComponent())
+            (sender as? Player)?.playSound(sender.location, Sound.ENTITY_VILLAGER_NO, 0.5f, 0.85f)
+            return
+        }
+        // 월드 복제/생성이 비동기로 진행 중일 때 멈추면 그 콜백이 방금 지운 월드를
+        // 다시 만지려 들 수 있다 (ChzzkAbility caGameStop과 동일한 가드)
+        if (phase == GamePhase.WORLD_GENERATING) {
+            sender.sendMessage("&c게임이 시작되기 전이거나 이미 종료된 상태입니다. ($phase)".toComponent())
             (sender as? Player)?.playSound(sender.location, Sound.ENTITY_VILLAGER_NO, 0.5f, 0.85f)
             return
         }
