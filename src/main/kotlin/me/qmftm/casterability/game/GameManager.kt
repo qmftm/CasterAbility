@@ -2,6 +2,7 @@ package me.qmftm.casterability.game
 
 import me.qmftm.casterability.CasterAbility
 import me.qmftm.casterability.ability.AbilityRegistry
+import me.qmftm.casterability.config.GameConfig
 import me.qmftm.casterability.ability.AbilityTrigger
 import me.qmftm.casterability.event.AbilityUseEvent
 import me.qmftm.casterability.event.GameEndEvent
@@ -20,6 +21,7 @@ import org.bukkit.entity.Player
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import org.bukkit.scheduler.BukkitTask
+import java.io.File
 import java.util.UUID
 
 class GameManager(private val plugin: CasterAbility) {
@@ -46,18 +48,8 @@ class GameManager(private val plugin: CasterAbility) {
 
     private var gameWorld: World? = null
 
-    // ── 월드 초기화 (onEnable 시 호출) ────────────────────
-
-    fun prepareWorld() {
-        val name = plugin.gameConfig.worldName
-        gameWorld = Bukkit.getWorld(name) ?: run {
-            plugin.logger.info("'$name' 월드를 찾을 수 없어 새로 생성합니다...")
-            val world = Bukkit.createWorld(WorldCreator(name))
-            if (world != null) plugin.logger.info("'$name' 월드 생성 완료")
-            else plugin.logger.severe("'$name' 월드 생성 실패")
-            world
-        }
-    }
+    /** 실제로 뜨는 게임 월드 이름. worldName 자체는 손대지 않는 원본(템플릿)이다. */
+    private fun gameWorldName(cfg: GameConfig) = "${cfg.worldName}-game"
 
     // ── 게임 시작 ─────────────────────────────────────────
 
@@ -115,19 +107,87 @@ class GameManager(private val plugin: CasterAbility) {
         broadcast("&e모든 플레이어가 능력을 선택하였습니다. 게임이 곧 시작됩니다...")
         Bukkit.getScheduler().runTaskLater(plugin, Runnable {
             phase = GamePhase.WORLD_GENERATING
-            setupWorld()
+            prepareGameWorld { world ->
+                if (!isRunning) return@prepareGameWorld
+                if (world == null) {
+                    broadcast("&c게임 월드를 준비하지 못했습니다. 콘솔 로그를 확인하세요.")
+                    stopGame(Bukkit.getConsoleSender())
+                    return@prepareGameWorld
+                }
+                gameWorld = world
+                setupWorld(world)
+            }
         }, 20L)
+    }
+
+    // ── 월드 준비 (템플릿 복제 또는 새로 생성) ─────────────
+
+    /**
+     * `worldName` 폴더(템플릿)가 있으면 그걸 `worldName-game` 으로 통째로 복제해서 씁니다.
+     * 없으면 `worldName-game` 을 새로 생성합니다. 어느 쪽이든 원본은 건드리지 않습니다.
+     *
+     * 파일 복사는 서버 스레드를 막지 않도록 비동기로 돌리고,
+     * 월드를 실제로 불러오는 시점(`Bukkit.createWorld`)만 메인 스레드로 돌아옵니다.
+     */
+    private fun prepareGameWorld(onReady: (World?) -> Unit) {
+        val cfg      = plugin.gameConfig
+        val gameName = gameWorldName(cfg)
+
+        // 크래시 등으로 이전 게임 월드가 아직 떠 있으면 먼저 내린다
+        Bukkit.getWorld(gameName)?.let { teardownWorldFiles(it) { loadGameWorld(gameName, cfg, onReady) } }
+            ?: loadGameWorld(gameName, cfg, onReady)
+    }
+
+    private fun loadGameWorld(gameName: String, cfg: GameConfig, onReady: (World?) -> Unit) {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, Runnable {
+            val container = Bukkit.getWorldContainer()
+            val gameFolder = File(container, gameName)
+            if (gameFolder.exists()) gameFolder.deleteRecursively()
+
+            val templateFolder = File(container, cfg.worldName)
+            if (templateFolder.isDirectory) {
+                plugin.logger.info("'${cfg.worldName}' 템플릿을 '$gameName' 으로 복제합니다...")
+                templateFolder.copyRecursively(gameFolder, overwrite = true) { file, ex ->
+                    // session.lock 은 잠겨 있을 수 있으니 실패해도 건너뛴다 — 없어도 로드에 지장 없다
+                    if (file.name == "session.lock") OnErrorAction.SKIP
+                    else { plugin.logger.warning("복제 실패: ${file.path} (${ex.message})"); OnErrorAction.SKIP }
+                }
+            } else {
+                plugin.logger.info("'${cfg.worldName}' 템플릿이 없어 '$gameName' 을 새로 생성합니다...")
+            }
+
+            Bukkit.getScheduler().runTask(plugin, Runnable {
+                val world = Bukkit.createWorld(WorldCreator(gameName))
+                if (world == null) plugin.logger.severe("게임 월드('$gameName') 로드/생성 실패")
+                onReady(world)
+            })
+        })
+    }
+
+    /** 월드를 내리고 폴더도 지운다. 안에 남은 플레이어는 다른 월드 스폰으로 옮긴다. */
+    private fun teardownWorldFiles(world: World, onDone: () -> Unit = {}) {
+        val fallback = Bukkit.getWorlds().firstOrNull { it != world }
+        if (fallback != null) world.players.forEach { it.teleport(fallback.spawnLocation) }
+
+        val name = world.name
+        if (!Bukkit.unloadWorld(world, false)) {
+            plugin.logger.warning("월드('$name')를 내리지 못했습니다 — 안에 플레이어가 남아 있을 수 있습니다.")
+            onDone()
+            return
+        }
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, Runnable {
+            val folder = File(Bukkit.getWorldContainer(), name)
+            if (folder.exists() && !folder.deleteRecursively()) {
+                plugin.logger.warning("월드 폴더('$name')를 지우지 못했습니다.")
+            }
+            Bukkit.getScheduler().runTask(plugin, Runnable(onDone))
+        })
     }
 
     // ── 월드 설정 ─────────────────────────────────────────
 
-    private fun setupWorld() {
-        val cfg   = plugin.gameConfig
-        val world = gameWorld ?: run {
-            plugin.logger.severe("게임 월드(${cfg.worldName})를 찾을 수 없습니다.")
-            stopGame(Bukkit.getConsoleSender())
-            return
-        }
+    private fun setupWorld(world: World) {
+        val cfg = plugin.gameConfig
 
         // 바다·강·사막을 피해 중심을 고른다 (ChzzkAbility World.sk)
         val center = SpawnLocator.findWorldCenter(world, sampleRadius = cfg.worldborderMaxRadius)
@@ -274,7 +334,10 @@ class GameManager(private val plugin: CasterAbility) {
         gamePlayers.clear()
         bossBar.deleteAll()
 
-        gameWorld?.worldBorder?.reset()
+        // 게임 월드는 매번 새로 만드므로 여기서 통째로 지운다. 원본(템플릿)은 그대로 둔다.
+        gameWorld?.let { teardownWorldFiles(it) }
+        gameWorld = null
+
         broadcast("&f관리자 &e${sender.name}&f님에 의해 능력자 게임이 종료되었습니다.")
     }
 

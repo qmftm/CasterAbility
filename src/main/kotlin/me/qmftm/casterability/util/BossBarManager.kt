@@ -60,6 +60,10 @@ class BossBarManager(private val plugin: CasterAbility) {
         val total = seconds
         val remaining = intArrayOf(seconds)
 
+        // ChzzkAbility caTimerBossbar: 75/50/25% 지점을 한 번씩 안내하고, 마지막 3틱은 매초 안내한다.
+        // 남은 %가 각 문턱 아래로 처음 내려가는 순간에만 방송하도록 다음 문턱을 하나씩 지워나간다.
+        val stageThresholds = ArrayDeque(listOf(75, 50, 25))
+
         val task = Bukkit.getScheduler().runTaskTimer(plugin, Runnable {
             if (!bars.containsKey(id)) return@Runnable
 
@@ -81,10 +85,26 @@ class BossBarManager(private val plugin: CasterAbility) {
             }
 
             if (broadcast) {
-                when (remaining[0]) {
-                    3 -> Bukkit.broadcast("§e${name.replace("&", "§")} §e3초 남았습니다.".toSectionComponent())
-                    2 -> Bukkit.broadcast("§6${name.replace("&", "§")} §62초 남았습니다.".toSectionComponent())
-                    1 -> Bukkit.broadcast("§c${name.replace("&", "§")} §c1초 남았습니다.".toSectionComponent())
+                val pct = progress * 100
+                val stageMsg = when (remaining[0]) {
+                    3, 2, 1 -> null // 마지막 3초는 아래에서 따로 처리
+                    else -> {
+                        if (stageThresholds.isNotEmpty() && pct <= stageThresholds.first()) {
+                            stageThresholds.removeFirst()
+                            "§b${remaining[0]}"
+                        } else null
+                    }
+                }
+                val countdownMsg = when (remaining[0]) {
+                    3 -> "§e3"
+                    2 -> "§62"
+                    1 -> "§c1"
+                    else -> null
+                }
+                (stageMsg ?: countdownMsg)?.let { time ->
+                    Bukkit.broadcast(
+                        "${name.replace("&", "§")}§a이(가) $time§a초 남았습니다.".toSectionComponent()
+                    )
                 }
             }
 

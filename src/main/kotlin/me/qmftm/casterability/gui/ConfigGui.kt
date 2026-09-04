@@ -49,7 +49,7 @@ class ConfigGui(private val plugin: CasterAbility) {
         Entry(9,  "game.weather_clear",        "§f맑은 날씨 강제",     EntryType.BOOL),
         Entry(10, "game.wreck",                "§f쿨타임 감소(%)",     EntryType.INT,  0,   100, 5),
 
-        Entry(13, "spawn.world_name",          "§f게임 월드 이름",     EntryType.STRING_READONLY),
+        Entry(13, "spawn.world_name",          "§f월드 템플릿 이름",   EntryType.STRING_READONLY),
         Entry(14, "spawn.random_spawn",        "§f랜덤 스폰",          EntryType.BOOL),
         Entry(15, "spawn.random_radius",       "§f랜덤 스폰 반경",     EntryType.INT,  10,  2000, 10),
 
@@ -152,6 +152,8 @@ class ConfigGui(private val plugin: CasterAbility) {
                 e.label,
                 "§7현재: §f${value as? String ?: ""}",
                 "§8config.yml 에서 수정 후 /ca reload",
+                "§8이 폴더가 있으면 게임마다 복제해서 씁니다.",
+                "§8없으면 그때그때 새로 생성합니다.",
             )
         }
     }

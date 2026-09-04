@@ -19,6 +19,10 @@ game:
   wreck: 0
 
 spawn:
+  # 이 이름의 월드 폴더(서버 루트)가 있으면 템플릿으로 보고, 게임마다
+  # "<world_name>-game" 으로 통째로 복제해서 씁니다. 원본은 건드리지 않습니다.
+  # 없으면 게임마다 "<world_name>-game" 을 새로 생성합니다.
+  # 게임 월드는 게임이 끝날 때마다 통째로 지워집니다.
   world_name: casterability
   random_spawn: true
   random_radius: 100

@@ -27,7 +27,6 @@ class CasterAbility : JavaPlugin() {
         gameManager = GameManager(this)
         guiManager  = GuiManager(this)
         configGui   = ConfigGui(this)
-        gameManager.prepareWorld()
 
         // ── Skript 애드온 구문 등록 ───────────────────────
         if (Skript.isAcceptRegistrations()) {
@@ -59,7 +58,6 @@ class CasterAbility : JavaPlugin() {
 
     fun reloadGameConfig() {
         gameConfig = GameConfig.load(this)
-        gameManager.prepareWorld()
     }
 
     override fun onDisable() {
