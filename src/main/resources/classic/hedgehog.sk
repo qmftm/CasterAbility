@@ -33,4 +33,6 @@ on load:
 on ability use "hedgehog_ouch":
     event-entity is set
     chance of {@chance}%
-    damage event-entity by {@counter_damage}
+
+    # Skript의 damage 는 칸 단위(1 = 2 HP)라 HP로 적어둔 값을 2로 나눕니다.
+    damage event-entity by {@counter_damage} / 2

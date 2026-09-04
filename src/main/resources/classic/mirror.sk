@@ -52,6 +52,10 @@ on ability use "mirror_reflect":
     if {_damage} is not set:
         set {_damage} to 0
 
+    # 기억해둔 피해량은 Skript 기준(칸 단위)이고 ability damage 는 HP 단위라
+    # 2를 곱해서 단위를 맞춥니다. (1칸 = 2 HP)
+    set {_damage} to {_damage} * 2
+
     if {mirror.lastAttacker::%player's uuid%} is event-entity:
         set ability damage to ability damage + {_damage}
     else:

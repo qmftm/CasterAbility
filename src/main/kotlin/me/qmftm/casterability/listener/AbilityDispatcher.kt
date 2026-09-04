@@ -38,7 +38,8 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
             else -> return
         }
 
-        handleClick(p, trigger)
+        // 허공/블록을 향해 일부러 휘두른 것이므로 쿨타임이면 알려준다
+        handleClick(p, trigger, notifyCooldown = true)
     }
 
     /**
@@ -51,33 +52,46 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
     fun onLeftClickHit(event: EntityDamageByEntityEvent) {
         val attacker = event.damager as? Player ?: return
         if (!isInGame(attacker)) return
-        handleClick(attacker, AbilityTrigger.LEFT_CLICK)
+        // 전투 중에는 초당 몇 번씩 들어오므로 쿨타임 안내를 하지 않는다.
+        // 안내는 허공을 향해 휘둘렀을 때(onInteract)만 뜬다.
+        handleClick(attacker, AbilityTrigger.LEFT_CLICK, notifyCooldown = false)
     }
 
-    /** RIGHT_CLICK/LEFT_CLICK 공통: 아이템을 확인하고, 쿨타임이면 안내만 하고, 아니면 발동시킨다. */
-    private fun handleClick(p: Player, trigger: AbilityTrigger) {
-        AbilityRegistry.triggerableAbilities(p, trigger)
-            .filter { def ->
-                // item이 지정된 경우 손에 들고 있어야 함
-                def.item == null || def.item == p.inventory.itemInMainHand.type
-            }
-            .forEach { def ->
-                if (AbilityRegistry.isOnCooldown(p, def.id)) {
+    /**
+     * RIGHT_CLICK/LEFT_CLICK 공통: 아이템을 확인하고, 쿨타임이면 건너뛰고, 아니면 발동시킨다.
+     *
+     * @param notifyCooldown 쿨타임 중일 때 남은 시간을 채팅으로 알려줄지
+     */
+    private fun handleClick(p: Player, trigger: AbilityTrigger, notifyCooldown: Boolean) {
+        val defs = AbilityRegistry.triggerableAbilities(p, trigger)
+        if (defs.isEmpty()) return
+
+        // 손에 든 아이템은 한 번만 읽는다
+        val held = p.inventory.itemInMainHand.type
+
+        for (def in defs) {
+            // item이 지정된 경우 손에 들고 있어야 함
+            if (def.item != null && def.item != held) continue
+
+            if (AbilityRegistry.isOnCooldown(p, def.id)) {
+                if (notifyCooldown) {
                     val remain = AbilityRegistry.getCooldownSeconds(p, def.id)
                     p.sendMessage("§c[${def.displayName}] 쿨타임 ${remain}초 남음")
-                    return@forEach
                 }
-                val used = dispatch(p, def.id, trigger)
-                // 스크립트가 cancel event 로 거부하면 쿨타임을 걸지 않는다
-                if (used != null && !used.isCancelled && def.cooldownSeconds > 0) {
-                    AbilityRegistry.startCooldown(p, def.id, def.cooldownSeconds)
-                }
+                continue
             }
+
+            val used = dispatch(p, def.id, trigger)
+            // 스크립트가 cancel event 로 거부하면 쿨타임을 걸지 않는다
+            if (used != null && !used.isCancelled && def.cooldownSeconds > 0) {
+                AbilityRegistry.startCooldown(p, def.id, def.cooldownSeconds)
+            }
+        }
     }
 
     // ── ON_HIT ───────────────────────────────────────────
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     fun onHit(event: EntityDamageByEntityEvent) {
         val attacker = event.damager as? Player ?: return
         val victim   = event.entity   as? Player ?: return
@@ -101,7 +115,7 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
 
     // ── ON_DAMAGED ───────────────────────────────────────
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     fun onDamaged(event: EntityDamageByEntityEvent) {
         val victim   = event.entity   as? Player ?: return
         val attacker = event.damager  as? Player ?: return
@@ -125,7 +139,10 @@ class AbilityDispatcher(private val game: GameManager) : Listener {
 
     // ── ON_KILL ──────────────────────────────────────────
 
-    @EventHandler
+    // on_hit / on_damaged 가 HIGH에서 피해량을 고친 뒤에 봐야 하므로 그보다 뒤에 선다.
+    // NORMAL에서 보면 능력으로 늘어난 피해가 반영되기 전이라, 그 능력 때문에
+    // 죽는 경우에 on_kill 이 뜨지 않는다.
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun onKill(event: EntityDamageByEntityEvent) {
         val victim = event.entity as? Player ?: return
         if (victim.health - event.finalDamage > 0) return

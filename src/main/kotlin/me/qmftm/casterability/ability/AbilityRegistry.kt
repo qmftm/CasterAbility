@@ -17,6 +17,14 @@ object AbilityRegistry {
     private val classes    = mutableMapOf<String, AbilityClass>()
     private val abilities  = mutableMapOf<String, AbilityDefinition>()
 
+    /**
+     * class id → 그 클래스에 속한 ability 목록.
+     *
+     * abilities를 매번 훑지 않으려고 등록할 때 미리 묶어 둡니다.
+     * 피해 이벤트 하나에 리스너가 여럿 붙어서 이 조회가 자주 일어납니다.
+     */
+    private val byClass = mutableMapOf<String, MutableList<AbilityDefinition>>()
+
     // ── 플레이어 상태 ──────────────────────────────────────
 
     /** 플레이어 UUID → 현재 장착된 ability class id */
@@ -38,7 +46,12 @@ object AbilityRegistry {
     }
 
     fun registerAbility(def: AbilityDefinition) {
-        abilities[def.id] = def
+        // 같은 id를 다시 등록하면(스크립트 리로드) 예전 정의를 색인에서 빼야
+        // 목록에 유령이 남지 않습니다.
+        abilities.put(def.id, def)?.let { old ->
+            byClass[old.classId]?.removeIf { it.id == old.id }
+        }
+        byClass.getOrPut(def.classId) { mutableListOf() }.add(def)
     }
 
     // ── 조회 ──────────────────────────────────────────────
@@ -51,7 +64,7 @@ object AbilityRegistry {
 
     /** 특정 클래스에 속한 모든 ability */
     fun abilitiesOfClass(classId: String): List<AbilityDefinition> =
-        abilities.values.filter { it.classId == classId }
+        byClass[classId] ?: emptyList()
 
     /** 플레이어가 현재 가진 클래스에 속한 모든 ability */
     fun abilitiesOfPlayer(player: Player): List<AbilityDefinition> =
@@ -67,8 +80,21 @@ object AbilityRegistry {
      * 지금 이 트리거로 발동할 수 있는 ability 목록.
      * 클래스가 맞고, 꺼두지 않은 것만 남긴다.
      */
-    fun triggerableAbilities(player: Player, trigger: AbilityTrigger): List<AbilityDefinition> =
-        abilitiesOfPlayer(player).filter { it.trigger == trigger && !isAbilityDisabled(player, it.id) }
+    fun triggerableAbilities(player: Player, trigger: AbilityTrigger): List<AbilityDefinition> {
+        val defs = abilitiesOfPlayer(player)
+        if (defs.isEmpty()) return emptyList()
+
+        // 대부분의 호출은 아무것도 걸리지 않습니다. 그때 리스트를 만들지 않으려고
+        // 처음 하나가 걸릴 때까지 미룹니다. (피해 이벤트마다 여러 번 불립니다)
+        var matched: MutableList<AbilityDefinition>? = null
+        for (def in defs) {
+            if (def.trigger != trigger) continue
+            if (isAbilityDisabled(player, def.id)) continue
+            val list = matched ?: mutableListOf<AbilityDefinition>().also { matched = it }
+            list.add(def)
+        }
+        return matched ?: emptyList()
+    }
 
     /** 해당 클래스를 가진 접속 중인 플레이어들 */
     fun playersWithClass(classId: String): List<Player> =
@@ -184,5 +210,6 @@ object AbilityRegistry {
     fun clearDefinitions() {
         classes.clear()
         abilities.clear()
+        byClass.clear()
     }
 }

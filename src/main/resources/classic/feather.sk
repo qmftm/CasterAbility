@@ -55,7 +55,11 @@ on ability use "feather_flight":
 on sneak toggle:
     player has ability class "feather"
     {feather.flying::%player's uuid%} is set
-    player is sneaking
+
+    # 이 이벤트 안에서 "is sneaking" 은 웅크리기 직전 상태입니다.
+    # 그래서 "웅크리지 않고 있었다" = 지금 막 웅크렸다는 뜻입니다.
+    player is not sneaking
+
     push player forward at speed {@dash_speed}
 
 

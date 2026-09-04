@@ -42,5 +42,7 @@ on ability use "slotmachine_roulette":
     set {_name} to {_names::%{_index}%}
     set {_seconds} to random integer between {@min_seconds} and {@max_seconds}
 
-    apply {_type} 1 to player for {_seconds} seconds
+    # "apply speed 1 to ..." 형태는 종류를 리터럴로만 받습니다.
+    # 변수에 담아둔 종류는 "potion effect of ... of tier ..." 로 만들어 겁니다.
+    apply potion effect of {_type} of tier 1 to player for {_seconds} seconds
     send "&d룰렛! &f%{_name}%&f 효과를 %{_seconds}%초간 받습니다." to player

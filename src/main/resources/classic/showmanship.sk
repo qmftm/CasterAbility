@@ -78,5 +78,9 @@ on ability use "showmanship_finale":
     set {_target} to event-entity
     {_target}'s health < max health of {_target} * {@execute_percent} / 100
 
-    damage {_target} by 1000
+    # 지금 맞고 있는 대상을 다시 damage 하면 피격 무적 프레임에 막힙니다.
+    # 대신 이번 공격의 피해를 키워서 이 타격으로 죽게 만듭니다.
+    # 이렇게 해야 처치자도 제대로 남아 on_kill 이 정상적으로 뜹니다.
+    set ability damage to 1000
+
     broadcast "&c[쇼맨쉽] &f%player%&f님이 &c%{_target}%&f님을 처형했습니다!"

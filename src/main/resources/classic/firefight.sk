@@ -41,7 +41,8 @@ on load:
 
 on damage:
     victim has ability class "firefight"
-    damage cause is fire or fire tick
+    # Skript에서 FIRE_TICK(불에 타는 중)은 "burning" 입니다
+    damage cause is fire or burning
     set {_heal} to damage
     cancel event
     heal victim by {_heal}

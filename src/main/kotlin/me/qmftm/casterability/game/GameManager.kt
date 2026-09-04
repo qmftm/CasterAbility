@@ -269,17 +269,23 @@ class GameManager(private val plugin: CasterAbility) {
             .forEach { def ->
                 val task = Bukkit.getScheduler().runTaskTimer(plugin, Runnable {
                     if (!isRunning || phase != GamePhase.IN_GAME) return@Runnable
-                    gamePlayers.mapNotNull { Bukkit.getPlayer(it) }
-                        .filter { AbilityRegistry.getPlayerClassId(it) == def.classId }
-                        .filter { !AbilityRegistry.isAbilityDisabled(it, def.id) }
-                        .forEach { p ->
-                            if (!AbilityRegistry.isOnCooldown(p, def.id)) {
-                                val event = AbilityUseEvent(p, def, AbilityTrigger.PASSIVE)
-                                Bukkit.getPluginManager().callEvent(event)
-                                if (def.cooldownSeconds > 0)
-                                    AbilityRegistry.startCooldown(p, def.id, def.cooldownSeconds)
-                            }
-                        }
+
+                    // 주기가 짧은 패시브는 초당 열 번씩 돌기도 합니다. 해당 능력자가
+                    // 하나도 없는 경우가 대부분이라, 중간 리스트를 만들지 않고
+                    // 한 번만 훑으면서 걸러냅니다.
+                    for (uuid in gamePlayers) {
+                        val p = Bukkit.getPlayer(uuid) ?: continue
+                        if (AbilityRegistry.getPlayerClassId(p) != def.classId) continue
+                        if (AbilityRegistry.isAbilityDisabled(p, def.id)) continue
+                        if (AbilityRegistry.isOnCooldown(p, def.id)) continue
+
+                        val event = AbilityUseEvent(p, def, AbilityTrigger.PASSIVE)
+                        Bukkit.getPluginManager().callEvent(event)
+                        // 스크립트가 cancel event 로 거부하면 쿨타임을 걸지 않는다
+                        // (클릭 트리거와 같은 규칙)
+                        if (!event.isCancelled && def.cooldownSeconds > 0)
+                            AbilityRegistry.startCooldown(p, def.id, def.cooldownSeconds)
+                    }
                 }, 0L, def.passiveIntervalTicks)
                 passiveTasks.add(task)
             }

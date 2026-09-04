@@ -54,28 +54,40 @@ on ability use "devilboots_trail":
     block below {_loc} is not air
 
     set block at {_loc} to fire
-    add {_loc} to {devilboots.fire::*}
+
+    # 자국은 사람마다 따로 셉니다. 한 목록을 같이 쓰면 악마의 부츠가 둘일 때
+    # 서로의 불을 꺼버립니다.
+    set {_id} to player's uuid
+    add {_loc} to {devilboots.fire::%{_id}%::*}
 
     # 자국이 너무 길어지면 가장 오래된 것부터 끈다
-    if size of {devilboots.fire::*} > {@trail_max}:
-        set {_old} to first element of {devilboots.fire::*}
+    if size of {devilboots.fire::%{_id}%::*} > {@trail_max}:
+        set {_old} to first element of {devilboots.fire::%{_id}%::*}
         if block at {_old} is fire:
             set block at {_old} to air
-        remove {_old} from {devilboots.fire::*}
+        remove {_old} from {devilboots.fire::%{_id}%::*}
 
 
 # ── 화염·용암 피해 면역 ───────────────────────────────────
 
 on damage:
     victim has ability class "devilboots"
-    damage cause is fire or fire tick or lava
+    # Skript에서 FIRE_TICK(불에 타는 중)은 "burning" 입니다
+    damage cause is fire or burning or lava
     cancel event
 
 
 # ── 게임이 끝나면 남은 불을 끈다 ──────────────────────────
 
-on game end:
-    loop {devilboots.fire::*}:
+# loop 안에서 또 loop 를 돌면 loop-value 가 어느 쪽인지 헷갈리므로
+# 불 끄는 일은 함수로 빼둡니다.
+
+function devilbootsExtinguish(p: player):
+    loop {devilboots.fire::%{_p}'s uuid%::*}:
         if block at loop-value is fire:
             set block at loop-value to air
+
+on game end:
+    loop all players:
+        devilbootsExtinguish(loop-player)
     delete {devilboots.fire::*}
