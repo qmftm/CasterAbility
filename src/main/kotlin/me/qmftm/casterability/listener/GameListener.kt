@@ -109,15 +109,9 @@ class GuiListener(private val plugin: CasterAbility) : Listener {
 
         if (gui.isListGui(p, event.inventory)) {
             event.isCancelled = true
-            when (event.rawSlot) {
-                GuiManager.SORT_NAME_SLOT -> {
-                    gui.openAbilityList(p, GuiManager.ListSort.NAME)
-                    p.playSound(p.location, org.bukkit.Sound.UI_BUTTON_CLICK, 0.6f, 1f)
-                }
-                GuiManager.SORT_TIER_SLOT -> {
-                    gui.openAbilityList(p, GuiManager.ListSort.TIER)
-                    p.playSound(p.location, org.bukkit.Sound.UI_BUTTON_CLICK, 0.6f, 1f)
-                }
+            if (event.rawSlot == GuiManager.SORT_TOGGLE_SLOT) {
+                gui.openAbilityList(p, gui.currentListSort(p).next())
+                p.playSound(p.location, org.bukkit.Sound.UI_BUTTON_CLICK, 0.6f, 1f)
             }
             return
         }

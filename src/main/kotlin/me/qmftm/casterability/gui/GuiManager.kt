@@ -18,12 +18,22 @@ class GuiManager(private val plugin: CasterAbility) {
         const val DRAW_GUI_TITLE   = "§a§l능력 추첨"
         const val LIST_GUI_TITLE   = "§d§l능력 목록"
 
-        const val SORT_NAME_SLOT = 0
-        const val SORT_TIER_SLOT = 1
+        const val SORT_TOGGLE_SLOT = 0
         private const val LIST_HEADER_ROWS = 1
     }
 
-    enum class ListSort { DEFAULT, NAME, TIER }
+    /** AbilityWar의 AbilityListGUI처럼 버튼 하나로 순환한다: 이름 → 등급 → 등급 역순 → 이름 ... */
+    enum class ListSort(val display: String, val icon: Material) {
+        NAME("§f이름순", Material.PAPER),
+        TIER("§f등급순 §7(높은 등급 먼저)", Material.NETHER_STAR),
+        TIER_DESC("§f등급 역순 §7(낮은 등급 먼저)", Material.GUNPOWDER);
+
+        fun next(): ListSort = when (this) {
+            NAME      -> TIER
+            TIER      -> TIER_DESC
+            TIER_DESC -> NAME
+        }
+    }
 
     // 인벤토리 → 플레이어 UUID 역매핑
     private val openDrawGuis = mutableMapOf<java.util.UUID, Inventory>()
@@ -61,7 +71,7 @@ class GuiManager(private val plugin: CasterAbility) {
         p.playSound(p.location, org.bukkit.Sound.ITEM_BOOK_PAGE_TURN, 0.75f, 0.9f)
     }
 
-    fun openAbilityList(p: Player, sort: ListSort = listSort[p.uniqueId] ?: ListSort.DEFAULT) {
+    fun openAbilityList(p: Player, sort: ListSort = listSort[p.uniqueId] ?: ListSort.NAME) {
         listSort[p.uniqueId] = sort
         val classes = sortClasses(AbilityRegistry.getAllClasses().toList(), sort)
         val rows    = maxOf(2, minOf(6, (classes.size + 8) / 9 + LIST_HEADER_ROWS + 1))
@@ -70,15 +80,11 @@ class GuiManager(private val plugin: CasterAbility) {
         val bg = makeItem(Material.WHITE_STAINED_GLASS_PANE, " ")
         repeat(rows * 9) { inv.setItem(it, bg) }
 
-        inv.setItem(SORT_NAME_SLOT, makeItem(
-            Material.BOOK,
-            if (sort == ListSort.NAME) "§a§l가나다순 정렬 ✔" else "§f가나다순 정렬",
-            "§7클릭하여 이름 순서로 정렬합니다."
-        ))
-        inv.setItem(SORT_TIER_SLOT, makeItem(
-            Material.NETHER_STAR,
-            if (sort == ListSort.TIER) "§a§l등급순 정렬 ✔" else "§f등급순 정렬",
-            "§7클릭하여 등급(레벨) 순서로 정렬합니다."
+        inv.setItem(SORT_TOGGLE_SLOT, makeItem(
+            sort.icon,
+            "§a정렬: ${sort.display}",
+            "§7클릭하여 다음 정렬로 전환합니다.",
+            "§8(이름순 → 등급순 → 등급 역순)"
         ))
 
         classes.forEachIndexed { i, cls -> inv.setItem(LIST_HEADER_ROWS * 9 + i, buildClassItem(cls)) }
@@ -89,9 +95,9 @@ class GuiManager(private val plugin: CasterAbility) {
     }
 
     private fun sortClasses(classes: List<AbilityClass>, sort: ListSort): List<AbilityClass> = when (sort) {
-        ListSort.NAME    -> classes.sortedBy { it.name }
-        ListSort.TIER    -> classes.sortedBy { it.tier }
-        ListSort.DEFAULT -> classes
+        ListSort.NAME      -> classes.sortedBy { it.name }
+        ListSort.TIER      -> classes.sortedBy { it.tier }
+        ListSort.TIER_DESC -> classes.sortedByDescending { it.tier }
     }
 
     fun isDrawGui(p: Player, inv: Inventory): Boolean =
@@ -101,6 +107,8 @@ class GuiManager(private val plugin: CasterAbility) {
 
     fun isListGui(p: Player, inv: Inventory): Boolean =
         openListGuis[p.uniqueId] == inv
+
+    fun currentListSort(p: Player): ListSort = listSort[p.uniqueId] ?: ListSort.NAME
 
     fun clearListGui(p: Player) = openListGuis.remove(p.uniqueId)
 
