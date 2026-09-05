@@ -1,5 +1,6 @@
 package me.qmftm.casterability.skript.section
 
+import ch.njol.skript.ScriptLoader
 import ch.njol.skript.config.EntryNode
 import ch.njol.skript.config.SectionNode
 
@@ -17,13 +18,13 @@ internal fun SectionNode.readEntries(): Map<String, String> {
     for (node in this) {
         if (node is EntryNode) {
             val k = node.key?.trim() ?: continue
-            out[k.lowercase()] = node.value.trim().unquote()
+            out[k.lowercase()] = node.value.trim().withOptions().unquote()
             continue
         }
         val raw = node.key?.trim() ?: continue
         val idx = raw.indexOf(':')
         if (idx <= 0) continue
-        out[raw.substring(0, idx).trim().lowercase()] = raw.substring(idx + 1).trim().unquote()
+        out[raw.substring(0, idx).trim().lowercase()] = raw.substring(idx + 1).trim().withOptions().unquote()
     }
     return out
 }
@@ -40,8 +41,16 @@ internal fun SectionNode.readEntries(): Map<String, String> {
 internal fun SectionNode.readLines(key: String): List<String> {
     val target = this.firstOrNull { it is SectionNode && it.key?.trim()?.trimEnd(':')?.lowercase() == key }
         as? SectionNode ?: return emptyList()
-    return target.mapNotNull { it.key?.trim()?.unquote() }
+    return target.mapNotNull { it.key?.trim()?.withOptions()?.unquote() }
 }
 
 private fun String.unquote(): String =
     if (length >= 2 && startsWith('"') && endsWith('"')) substring(1, length - 1) else this
+
+/**
+ * `{@name}` 옵션 치환. Skript는 이 치환을 파서가 노드를 실제로 파싱할 때 수행하고
+ * (ScriptLoader.replaceOptions 호출), 순수 텍스트인 node.key/value 자체에는 적용해두지
+ * 않는다. 그래서 우리처럼 SectionNode를 직접 텍스트로 읽는 코드는 이걸 스스로 불러줘야
+ * "{@option}"이 실제 옵션 값으로 바뀐다.
+ */
+private fun String.withOptions(): String = ScriptLoader.replaceOptions(this)
