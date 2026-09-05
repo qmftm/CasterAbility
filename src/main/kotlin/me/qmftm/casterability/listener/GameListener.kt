@@ -3,6 +3,7 @@ package me.qmftm.casterability.listener
 import me.qmftm.casterability.CasterAbility
 import me.qmftm.casterability.ability.AbilityRegistry
 import me.qmftm.casterability.game.GamePhase
+import me.qmftm.casterability.gui.GuiManager
 import me.qmftm.casterability.util.toComponent
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -103,6 +104,21 @@ class GuiListener(private val plugin: CasterAbility) : Listener {
                 isShift = event.isShiftClick,
                 isRight = event.isRightClick,
             )
+            return
+        }
+
+        if (gui.isListGui(p, event.inventory)) {
+            event.isCancelled = true
+            when (event.rawSlot) {
+                GuiManager.SORT_NAME_SLOT -> {
+                    gui.openAbilityList(p, GuiManager.ListSort.NAME)
+                    p.playSound(p.location, org.bukkit.Sound.UI_BUTTON_CLICK, 0.6f, 1f)
+                }
+                GuiManager.SORT_TIER_SLOT -> {
+                    gui.openAbilityList(p, GuiManager.ListSort.TIER)
+                    p.playSound(p.location, org.bukkit.Sound.UI_BUTTON_CLICK, 0.6f, 1f)
+                }
+            }
             return
         }
 

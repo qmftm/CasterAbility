@@ -17,10 +17,18 @@ class GuiManager(private val plugin: CasterAbility) {
     companion object {
         const val DRAW_GUI_TITLE   = "§a§l능력 추첨"
         const val LIST_GUI_TITLE   = "§d§l능력 목록"
+
+        const val SORT_NAME_SLOT = 0
+        const val SORT_TIER_SLOT = 1
+        private const val LIST_HEADER_ROWS = 1
     }
+
+    enum class ListSort { DEFAULT, NAME, TIER }
 
     // 인벤토리 → 플레이어 UUID 역매핑
     private val openDrawGuis = mutableMapOf<java.util.UUID, Inventory>()
+    private val openListGuis = mutableMapOf<java.util.UUID, Inventory>()
+    private val listSort     = mutableMapOf<java.util.UUID, ListSort>()
 
     fun openDrawGui(p: Player) {
         val gm      = plugin.gameManager
@@ -53,23 +61,48 @@ class GuiManager(private val plugin: CasterAbility) {
         p.playSound(p.location, org.bukkit.Sound.ITEM_BOOK_PAGE_TURN, 0.75f, 0.9f)
     }
 
-    fun openAbilityList(p: Player) {
-        val classes = AbilityRegistry.getAllClasses().toList()
-        val rows    = maxOf(1, minOf(6, (classes.size + 8) / 9 + 1))
+    fun openAbilityList(p: Player, sort: ListSort = listSort[p.uniqueId] ?: ListSort.DEFAULT) {
+        listSort[p.uniqueId] = sort
+        val classes = sortClasses(AbilityRegistry.getAllClasses().toList(), sort)
+        val rows    = maxOf(2, minOf(6, (classes.size + 8) / 9 + LIST_HEADER_ROWS + 1))
         val inv     = Bukkit.createInventory(null, rows * 9, LIST_GUI_TITLE.toSectionComponent())
 
         val bg = makeItem(Material.WHITE_STAINED_GLASS_PANE, " ")
         repeat(rows * 9) { inv.setItem(it, bg) }
 
-        classes.forEachIndexed { i, cls -> inv.setItem(i, buildClassItem(cls)) }
+        inv.setItem(SORT_NAME_SLOT, makeItem(
+            Material.BOOK,
+            if (sort == ListSort.NAME) "§a§l가나다순 정렬 ✔" else "§f가나다순 정렬",
+            "§7클릭하여 이름 순서로 정렬합니다."
+        ))
+        inv.setItem(SORT_TIER_SLOT, makeItem(
+            Material.NETHER_STAR,
+            if (sort == ListSort.TIER) "§a§l등급순 정렬 ✔" else "§f등급순 정렬",
+            "§7클릭하여 등급(레벨) 순서로 정렬합니다."
+        ))
+
+        classes.forEachIndexed { i, cls -> inv.setItem(LIST_HEADER_ROWS * 9 + i, buildClassItem(cls)) }
+
+        openListGuis[p.uniqueId] = inv
         p.openInventory(inv)
         p.playSound(p.location, org.bukkit.Sound.ITEM_BOOK_PAGE_TURN, 0.75f, 0.9f)
+    }
+
+    private fun sortClasses(classes: List<AbilityClass>, sort: ListSort): List<AbilityClass> = when (sort) {
+        ListSort.NAME    -> classes.sortedBy { it.name }
+        ListSort.TIER    -> classes.sortedBy { it.tier }
+        ListSort.DEFAULT -> classes
     }
 
     fun isDrawGui(p: Player, inv: Inventory): Boolean =
         openDrawGuis[p.uniqueId] == inv
 
     fun clearDrawGui(p: Player) = openDrawGuis.remove(p.uniqueId)
+
+    fun isListGui(p: Player, inv: Inventory): Boolean =
+        openListGuis[p.uniqueId] == inv
+
+    fun clearListGui(p: Player) = openListGuis.remove(p.uniqueId)
 
     // ── 아이템 유틸 ───────────────────────────────────────
 
